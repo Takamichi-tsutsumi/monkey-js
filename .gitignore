@@ -89,5 +89,5 @@ typings/
 # dotenv environment variables file
 .env
 
-
-
+.tern-port
+flow-typed/
