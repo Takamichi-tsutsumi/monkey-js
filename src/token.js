@@ -29,3 +29,22 @@ export const RBRAC: string = '}';
 // Keywords
 export const FUNCTION: string = 'FUNCTION';
 export const LET: string = 'LET';
+
+export function newToken(type: TokenType, char: ?string): Token {
+  return {
+    Type: type,
+    Literal: char || '',
+  };
+}
+
+export const keywords: { [string]: TokenType } = {
+  fn: FUNCTION,
+  let: LET,
+};
+
+export function LookupIdent(ident: string): TokenType {
+  const tok = keywords[ident];
+  if (tok) return tok;
+
+  return IDENT;
+}
