@@ -98,3 +98,115 @@ test('test next token more like source code', (t) => {
 
   t.pass();
 });
+
+test('test next token with more operators', (t) => {
+  const input: string = `
+  !-/*5;
+  5 < 10 > 5;
+  `;
+  const tests: Array<{
+    expectedType: TokenType,
+    expectedLiteral: string,
+  }> = [
+    { expectedType: token.BANG, expectedLiteral: '!' },
+    { expectedType: token.MINUS, expectedLiteral: '-' },
+    { expectedType: token.SLASH, expectedLiteral: '/' },
+    { expectedType: token.ASTERISK, expectedLiteral: '*' },
+    { expectedType: token.INT, expectedLiteral: '5' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.INT, expectedLiteral: '5' },
+    { expectedType: token.LT, expectedLiteral: '<' },
+    { expectedType: token.INT, expectedLiteral: '10' },
+    { expectedType: token.GT, expectedLiteral: '>' },
+    { expectedType: token.INT, expectedLiteral: '5' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.EOF, expectedLiteral: '' },
+  ];
+
+  const l = new Lexer(input);
+
+  tests.forEach((tt, i) => {
+    const tok = l.nextToken();
+
+    t.is(tt.expectedType, tok.Type, `tests[${i}] - tokentype wrong.`);
+    t.is(tt.expectedLiteral, tok.Literal, `tests[${i}] - literal wrong.`);
+  });
+
+  t.pass();
+});
+
+test('test next token with more keywords', (t) => {
+  const input: string = `
+  if (5 < 10) {
+    return true;
+  } else {
+    return false;
+  }
+  `;
+  const tests: Array<{
+    expectedType: TokenType,
+    expectedLiteral: string,
+  }> = [
+    { expectedType: token.IF, expectedLiteral: 'if' },
+    { expectedType: token.LPARE, expectedLiteral: '(' },
+    { expectedType: token.INT, expectedLiteral: '5' },
+    { expectedType: token.LT, expectedLiteral: '<' },
+    { expectedType: token.INT, expectedLiteral: '10' },
+    { expectedType: token.RPARE, expectedLiteral: ')' },
+    { expectedType: token.LBRAC, expectedLiteral: '{' },
+    { expectedType: token.RETURN, expectedLiteral: 'return' },
+    { expectedType: token.TRUE, expectedLiteral: 'true' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.RBRAC, expectedLiteral: '}' },
+    { expectedType: token.ELSE, expectedLiteral: 'else' },
+    { expectedType: token.LBRAC, expectedLiteral: '{' },
+    { expectedType: token.RETURN, expectedLiteral: 'return' },
+    { expectedType: token.FALSE, expectedLiteral: 'false' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.RBRAC, expectedLiteral: '}' },
+    { expectedType: token.EOF, expectedLiteral: '' },
+  ];
+
+  const l = new Lexer(input);
+
+  tests.forEach((tt, i) => {
+    const tok = l.nextToken();
+
+    t.is(tt.expectedType, tok.Type, `tests[${i}] - tokentype wrong.`);
+    t.is(tt.expectedLiteral, tok.Literal, `tests[${i}] - literal wrong.`);
+  });
+
+  t.pass();
+});
+
+test('test next token with two character operators', (t) => {
+  const input: string = `
+  10 == 10;
+  10 != 9;
+  `;
+  const tests: Array<{
+    expectedType: TokenType,
+    expectedLiteral: string,
+  }> = [
+    { expectedType: token.INT, expectedLiteral: '10' },
+    { expectedType: token.EQ, expectedLiteral: '==' },
+    { expectedType: token.INT, expectedLiteral: '10' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.INT, expectedLiteral: '10' },
+    { expectedType: token.NOT_EQ, expectedLiteral: '!=' },
+    { expectedType: token.INT, expectedLiteral: '9' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.EOF, expectedLiteral: '' },
+  ];
+
+  const l = new Lexer(input);
+
+  tests.forEach((tt, i) => {
+    const tok = l.nextToken();
+
+    t.is(tt.expectedType, tok.Type, `tests[${i}] - tokentype wrong.`);
+    t.is(tt.expectedLiteral, tok.Literal, `tests[${i}] - literal wrong.`);
+  });
+
+  t.pass();
+});

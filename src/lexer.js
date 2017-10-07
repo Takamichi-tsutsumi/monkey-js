@@ -44,10 +44,23 @@ export default class Lexer {
     return this.input.substring(position, this.position);
   }
 
+  readTwoCharToken(): string {
+    const char = this.char;
+    this.readChar();
+
+    if (char && this.char) return `${char}${this.char}`;
+    throw new Error('Not a two character token.');
+  }
+
   skipWhitespace(): void {
     while (this.char === ' ' || this.char === '\t' || this.char === '\n' || this.char === '\r') {
       this.readChar();
     }
+  }
+
+  peekChar(): ?string {
+    if (this.readPosition >= this.input.length) return null;
+    return this.input[this.readPosition];
   }
 
   nextToken(): Token {
@@ -57,7 +70,11 @@ export default class Lexer {
 
     switch (this.char) {
       case '=':
-        tok = token.newToken(token.ASSIGN, this.char);
+        if (this.peekChar() === '=') {
+          tok = token.newToken(token.EQ, this.readTwoCharToken());
+        } else {
+          tok = token.newToken(token.ASSIGN, this.char);
+        }
         break;
       case ';':
         tok = token.newToken(token.SEMICOLON, this.char);
@@ -79,6 +96,28 @@ export default class Lexer {
         break;
       case '}':
         tok = token.newToken(token.RBRAC, this.char);
+        break;
+      case '!':
+        if (this.peekChar() === '=') {
+          tok = token.newToken(token.NOT_EQ, this.readTwoCharToken());
+        } else {
+          tok = token.newToken(token.BANG, this.char);
+        }
+        break;
+      case '-':
+        tok = token.newToken(token.MINUS, this.char);
+        break;
+      case '*':
+        tok = token.newToken(token.ASTERISK, this.char);
+        break;
+      case '/':
+        tok = token.newToken(token.SLASH, this.char);
+        break;
+      case '<':
+        tok = token.newToken(token.LT, this.char);
+        break;
+      case '>':
+        tok = token.newToken(token.GT, this.char);
         break;
       case null:
         tok = token.newToken(token.EOF, '');
