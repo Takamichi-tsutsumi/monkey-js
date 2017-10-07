@@ -14,27 +14,27 @@ export const IDENT: string = 'IDENT';
 export const INT: string = 'INT';
 
 // Operators
-export const ASSIGN: string = '=';
-export const PLUS: string = '+';
-export const MINUS: string = '-';
-export const BANG: string = '!';
-export const ASTERISK: string = '*';
-export const SLASH: string = '/';
+export const ASSIGN: string = 'ASSIGN';
+export const PLUS: string = 'PLUS';
+export const MINUS: string = 'MINUS';
+export const BANG: string = 'BANG';
+export const ASTERISK: string = 'ASTERISK';
+export const SLASH: string = 'SLASH';
 
-export const LT: string = '<';
-export const GT: string = '>';
+export const LT: string = 'LT';
+export const GT: string = 'GT';
 
-export const EQ: string = '==';
-export const NOT_EQ: string = '!=';
+export const EQ: string = 'EQ';
+export const NOT_EQ: string = 'NOT_EQ';
 
 // Delimiters
-export const COMMA: string = ',';
-export const SEMICOLON: string = ';';
+export const COMMA: string = 'COMMA';
+export const SEMICOLON: string = 'SEMICOLON';
 
-export const LPARE: string = '(';
-export const RPARE: string = ')';
-export const LBRAC: string = '{';
-export const RBRAC: string = '}';
+export const LPAREN: string = 'LPAREN';
+export const RPAREN: string = 'RPAREN';
+export const LBRACE: string = 'LBRACE';
+export const RBRACE: string = 'RBRACE';
 
 // Keywords
 export const FUNCTION: string = 'FUNCTION';

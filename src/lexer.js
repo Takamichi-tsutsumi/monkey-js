@@ -1,5 +1,5 @@
 // @flow
-import * as token from '../src/token';
+import * as token from './token';
 import type { Token } from './token';
 
 export default class Lexer {
@@ -80,10 +80,10 @@ export default class Lexer {
         tok = token.newToken(token.SEMICOLON, this.char);
         break;
       case '(':
-        tok = token.newToken(token.LPARE, this.char);
+        tok = token.newToken(token.LPAREN, this.char);
         break;
       case ')':
-        tok = token.newToken(token.RPARE, this.char);
+        tok = token.newToken(token.RPAREN, this.char);
         break;
       case ',':
         tok = token.newToken(token.COMMA, this.char);
@@ -92,10 +92,10 @@ export default class Lexer {
         tok = token.newToken(token.PLUS, this.char);
         break;
       case '{':
-        tok = token.newToken(token.LBRAC, this.char);
+        tok = token.newToken(token.LBRACE, this.char);
         break;
       case '}':
-        tok = token.newToken(token.RBRAC, this.char);
+        tok = token.newToken(token.RBRACE, this.char);
         break;
       case '!':
         if (this.peekChar() === '=') {
