@@ -43,6 +43,8 @@ export default class Parser {
     switch (this.curToken.Type) {
       case token.LET:
         return this.parseLetStatement();
+      case token.RETURN:
+        return this.parseReturnStatement();
       default:
         return null;
     }
@@ -64,6 +66,19 @@ export default class Parser {
 
     // TODO: skipping the expressions until we encounter a semicolon
 
+    while (!this.curTokenIs(token.SEMICOLON)) {
+      this.nextToken();
+    }
+
+    return stmt;
+  }
+
+  parseReturnStatement(): ?ast.ReturnStatement {
+    const stmt: ast.ReturnStatement = new ast.ReturnStatement(this.curToken);
+
+    this.nextToken();
+
+    // TODO: skipping the expressions until we encounter a semicolon
     while (!this.curTokenIs(token.SEMICOLON)) {
       this.nextToken();
     }

@@ -43,7 +43,7 @@ const checkParserErrors = (t, p: Parser): void => {
 test('test let statements', (t) => {
   const input: string = `
   let x = 5;
-  let y 10;
+  let y = 10;
   let foobar = 80098;
   `;
 
@@ -71,6 +71,37 @@ test('test let statements', (t) => {
   tests.forEach((tt, i) => {
     const stmt: ast.Statement = program.Statements[i];
     testLetStatement(t, stmt, tt.expectedIdentifier);
+  });
+
+  t.pass();
+});
+
+test('test return statements', (t) => {
+  const input: string = `
+  return 5;
+  return 10;
+  return 99223;
+  `;
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  if (!program) {
+    t.fail('ParseProgram() returned null');
+    return;
+  }
+  if (program.Statements.length !== 3) {
+    t.fail(`program.Statements does not contain 3 statements. got=${program.Statements.length}`);
+    return;
+  }
+
+  program.Statements.forEach((stmt, i) => {
+    if (stmt.TokenLiteral() !== 'return') {
+      t.fail(`stmt.TokenLiteral not 'return', got=${stmt.TokenLiteral()}`);
+    }
   });
 
   t.pass();
