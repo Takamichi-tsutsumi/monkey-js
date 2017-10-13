@@ -112,3 +112,22 @@ test('test identifier expression', (t) => {
   t.is(ident.Value, 'foobar');
   t.is(ident.TokenLiteral(), 'foobar');
 });
+
+test('test integer literal expression', (t) => {
+  const input: string = '5;';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const literal: ast.IntegerLiteral = ((stmt.Expression: any): ast.IntegerLiteral);
+
+  t.is(literal.Value, 5);
+
+  t.is(literal.TokenLiteral(), '5');
+});

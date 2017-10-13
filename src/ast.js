@@ -101,3 +101,22 @@ export class Identifier implements Expression {
     return this.Token.Literal;
   }
 }
+
+export class IntegerLiteral implements Expression {
+  Token: token.Token;
+  Value: number;
+
+  constructor(tok: token.Token) {
+    this.Token = tok;
+  }
+
+  expressionNode() {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return this.Token.Literal.toString();
+  }
+}

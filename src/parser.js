@@ -33,6 +33,7 @@ export default class Parser {
     this.infixParseFns = new Map();
 
     this.registerPrefix(token.IDENT, this.parseIdentifier.bind(this));
+    this.registerPrefix(token.INT, this.parseIntegerLiteral.bind(this));
 
     this.nextToken();
     this.nextToken();
@@ -166,5 +167,14 @@ export default class Parser {
 
   parseIdentifier(): ast.Expression {
     return new ast.Identifier(this.curToken, this.curToken.Literal);
+  }
+
+  parseIntegerLiteral(): ast.Expression {
+    const lit: ast.IntegerLiteral = new ast.IntegerLiteral(this.curToken);
+
+    const value: number = Number(this.curToken.Literal);
+    lit.Value = value;
+
+    return lit;
   }
 }
