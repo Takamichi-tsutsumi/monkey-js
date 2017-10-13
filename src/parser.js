@@ -4,8 +4,8 @@ import * as ast from './ast';
 import Lexer from './lexer';
 import * as token from './token';
 
-type prefixParseFn = () => ast.Expression;
-type infixParseFn = ast.Expression => ast.Expression;
+type prefixParseFn = () => ?ast.Expression;
+type infixParseFn = ast.Expression => ?ast.Expression;
 
 const LOWEST: number = 1;
 const EQUALS: number = 2;
@@ -34,6 +34,8 @@ export default class Parser {
 
     this.registerPrefix(token.IDENT, this.parseIdentifier.bind(this));
     this.registerPrefix(token.INT, this.parseIntegerLiteral.bind(this));
+    this.registerPrefix(token.BANG, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(token.MINUS, this.parsePrefixExpression.bind(this));
 
     this.nextToken();
     this.nextToken();
@@ -176,5 +178,26 @@ export default class Parser {
     lit.Value = value;
 
     return lit;
+  }
+
+  noPrefixParseFnError(t: token.TokenType): void {
+    const msg: string = `no prefix parse function for ${t} found`;
+    this.errors.push(msg);
+  }
+
+  parsePrefixExpression(): ?ast.Expression {
+    const expression: ast.PrefixExpression = new ast.PrefixExpression(
+      this.curToken,
+      this.curToken.Literal,
+    );
+
+    this.nextToken();
+
+    const right: ?ast.Expression = this.parseExpression(PREFIX);
+    if (!right) return null;
+
+    expression.Right = right;
+
+    return expression;
   }
 }

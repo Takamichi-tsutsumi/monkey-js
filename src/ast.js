@@ -41,7 +41,7 @@ export class LetStatement implements Statement {
     return JSON.stringify(this);
   }
 
-  statementNode() {}
+  statementNode(): void {}
   TokenLiteral(): string {
     return this.Token.Literal;
   }
@@ -59,7 +59,7 @@ export class ReturnStatement implements Statement {
     return JSON.stringify(this);
   }
 
-  statementNode() {}
+  statementNode(): void {}
   TokenLiteral(): string {
     return this.Token.Literal;
   }
@@ -69,7 +69,7 @@ export class ExpressionStatement implements Statement {
   Token: token.Token;
   Expression: Expression;
 
-  constructor(tok: token.Token) {
+  constructor(tok: token.Token): void {
     this.Token = tok;
   }
 
@@ -77,7 +77,7 @@ export class ExpressionStatement implements Statement {
     return JSON.stringify(this);
   }
 
-  statementNode() {}
+  statementNode(): void {}
   TokenLiteral(): string {
     return this.Token.Literal;
   }
@@ -91,12 +91,13 @@ export class Identifier implements Expression {
     return JSON.stringify(this);
   }
 
-  constructor(tok: token.Token, val: string) {
+  constructor(tok: token.Token, val: string): void {
     this.Token = tok;
     this.Value = val;
   }
 
-  expressionNode() {}
+  expressionNode(): void {}
+
   TokenLiteral(): string {
     return this.Token.Literal;
   }
@@ -106,11 +107,11 @@ export class IntegerLiteral implements Expression {
   Token: token.Token;
   Value: number;
 
-  constructor(tok: token.Token) {
+  constructor(tok: token.Token): void {
     this.Token = tok;
   }
 
-  expressionNode() {}
+  expressionNode(): void {}
 
   TokenLiteral(): string {
     return this.Token.Literal;
@@ -118,5 +119,26 @@ export class IntegerLiteral implements Expression {
 
   toString(): string {
     return this.Token.Literal.toString();
+  }
+}
+
+export class PrefixExpression implements Expression {
+  Token: token.Token;
+  Operator: string;
+  Right: Expression;
+
+  constructor(tok: token.Token, op: string): void {
+    this.Token = tok;
+    this.Operator = op;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `(${this.Operator}${this.Right.toString()})`;
   }
 }

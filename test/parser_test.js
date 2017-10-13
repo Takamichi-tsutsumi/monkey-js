@@ -131,3 +131,42 @@ test('test integer literal expression', (t) => {
 
   t.is(literal.TokenLiteral(), '5');
 });
+
+const testIntegerLiteral = (t, il: ast.Expression, value: number): boolean => {
+  const integ: ast.IntegerLiteral = ((il: any): ast.IntegerLiteral);
+
+  t.is(integ.Value, value);
+  t.is(integ.TokenLiteral(), value.toString());
+
+  return true;
+};
+
+test('test parsing prefix expressions', (t) => {
+  const tests: Array<{
+    input: string,
+    operator: string,
+    integerValue: number,
+  }> = [
+    { input: '!5;', operator: '!', integerValue: 5 },
+    { input: '-15;', operator: '-', integerValue: 15 },
+  ];
+
+  tests.forEach((tt) => {
+    const l: Lexer = new Lexer(tt.input);
+    const p: Parser = new Parser(l);
+    const program: ast.Program = p.ParseProgram();
+    checkParserErrors(t, p);
+
+    t.is(program.Statements.length, 1);
+
+    const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+
+    const exp: ast.PrefixExpression = ((stmt.Expression: any): ast.PrefixExpression);
+
+    t.is(exp.Operator, tt.operator);
+
+    testIntegerLiteral(t, exp.Right, tt.integerValue);
+
+    t.pass();
+  });
+});
