@@ -50,17 +50,11 @@ test('test let statements', (t) => {
   const l: Lexer = new Lexer(input);
   const p: Parser = new Parser(l);
 
-  const program = p.ParseProgram();
+  const program: ast.Program = p.ParseProgram();
   checkParserErrors(t, p);
 
-  if (!program) {
-    t.fail('ParseProgram() returned null');
-    return;
-  }
-  if (program.Statements.length !== 3) {
-    t.fail(`program.Statements does not contain 3 statements. got=${program.Statements.length}`);
-    return;
-  }
+  t.truthy(program);
+  t.is(program.Statements.length, 3);
 
   const tests: Array<{ expectedIdentifier: string }> = [
     { expectedIdentifier: 'x' },
@@ -86,23 +80,35 @@ test('test return statements', (t) => {
   const l: Lexer = new Lexer(input);
   const p: Parser = new Parser(l);
 
-  const program = p.ParseProgram();
+  const program: ast.Program = p.ParseProgram();
   checkParserErrors(t, p);
 
-  if (!program) {
-    t.fail('ParseProgram() returned null');
-    return;
-  }
-  if (program.Statements.length !== 3) {
-    t.fail(`program.Statements does not contain 3 statements. got=${program.Statements.length}`);
-    return;
-  }
+  t.truthy(program);
+  t.is(program.Statements.length, 3);
 
-  program.Statements.forEach((stmt, i) => {
+  program.Statements.forEach((stmt) => {
     if (stmt.TokenLiteral() !== 'return') {
       t.fail(`stmt.TokenLiteral not 'return', got=${stmt.TokenLiteral()}`);
     }
   });
 
   t.pass();
+});
+
+test('test identifier expression', (t) => {
+  const input: string = 'foobar;';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const ident: ast.Identifier = ((stmt.Expression: any): ast.Identifier);
+
+  t.is(ident.Value, 'foobar');
+  t.is(ident.TokenLiteral(), 'foobar');
 });

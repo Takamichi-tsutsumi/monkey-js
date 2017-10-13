@@ -4,6 +4,17 @@ import * as ast from './ast';
 import Lexer from './lexer';
 import * as token from './token';
 
+type prefixParseFn = () => ast.Expression;
+type infixParseFn = ast.Expression => ast.Expression;
+
+const LOWEST: number = 1;
+const EQUALS: number = 2;
+const LESSGREATER: number = 3;
+const SUM: number = 4;
+const PRODUCT: number = 5;
+const PREFIX: number = 6;
+const CALL: number = 7;
+
 export default class Parser {
   l: Lexer;
 
@@ -11,9 +22,17 @@ export default class Parser {
   peekToken: token.Token;
   errors: Array<string>;
 
+  prefixParseFns: Map<token.TokenType, prefixParseFn>;
+  infixParseFns: Map<token.TokenType, infixParseFn>;
+
   constructor(l: Lexer): void {
     this.l = l;
     this.errors = [];
+
+    this.prefixParseFns = new Map();
+    this.infixParseFns = new Map();
+
+    this.registerPrefix(token.IDENT, this.parseIdentifier.bind(this));
 
     this.nextToken();
     this.nextToken();
@@ -46,7 +65,7 @@ export default class Parser {
       case token.RETURN:
         return this.parseReturnStatement();
       default:
-        return null;
+        return this.parseExpressionStatement();
     }
   }
 
@@ -111,5 +130,41 @@ export default class Parser {
   peekError(t: token.TokenType): void {
     const msg = `expected next token to be ${t}, got ${this.peekToken.Type} instead`;
     this.errors.push(msg);
+  }
+
+  registerPrefix(tokenType: token.TokenType, fn: prefixParseFn): void {
+    this.prefixParseFns.set(tokenType, fn);
+  }
+
+  registerInfix(tokenType: token.TokenType, fn: infixParseFn): void {
+    this.infixParseFns.set(tokenType, fn);
+  }
+
+  parseExpressionStatement(): ?ast.ExpressionStatement {
+    const stmt: ast.ExpressionStatement = new ast.ExpressionStatement(this.curToken);
+
+    const exp: ?ast.Expression = this.parseExpression(LOWEST);
+    if (!exp) return null;
+
+    stmt.Expression = exp;
+
+    if (this.peekTokenIs(token.SEMICOLON)) {
+      this.nextToken();
+    }
+
+    return stmt;
+  }
+
+  parseExpression(precedence: number): ?ast.Expression {
+    const prefix: ?prefixParseFn = this.prefixParseFns.get(this.curToken.Type);
+    if (!prefix) return null;
+
+    const leftExp = prefix();
+
+    return leftExp;
+  }
+
+  parseIdentifier(): ast.Expression {
+    return new ast.Identifier(this.curToken, this.curToken.Literal);
   }
 }

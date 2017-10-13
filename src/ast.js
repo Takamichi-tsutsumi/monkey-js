@@ -16,6 +16,10 @@ export interface Expression extends Node {
 export class Program {
   Statements: Array<Statement>;
 
+  toString(): string {
+    return JSON.stringify(this);
+  }
+
   TokenLiteral(): string {
     if (this.Statements.length > 0) {
       return this.Statements[0].TokenLiteral();
@@ -33,6 +37,10 @@ export class LetStatement implements Statement {
     this.Token = tok;
   }
 
+  toString(): string {
+    return JSON.stringify(this);
+  }
+
   statementNode() {}
   TokenLiteral(): string {
     return this.Token.Literal;
@@ -42,8 +50,31 @@ export class LetStatement implements Statement {
 export class ReturnStatement implements Statement {
   Token: token.Token;
   ReturnValue: Expression;
+
   constructor(tok: token.Token) {
     this.Token = tok;
+  }
+
+  toString(): string {
+    return JSON.stringify(this);
+  }
+
+  statementNode() {}
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+}
+
+export class ExpressionStatement implements Statement {
+  Token: token.Token;
+  Expression: Expression;
+
+  constructor(tok: token.Token) {
+    this.Token = tok;
+  }
+
+  toString(): string {
+    return JSON.stringify(this);
   }
 
   statementNode() {}
@@ -55,6 +86,10 @@ export class ReturnStatement implements Statement {
 export class Identifier implements Expression {
   Token: token.Token;
   Value: string;
+
+  toString(): string {
+    return JSON.stringify(this);
+  }
 
   constructor(tok: token.Token, val: string) {
     this.Token = tok;
