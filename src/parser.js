@@ -15,6 +15,17 @@ const PRODUCT: number = 5;
 const PREFIX: number = 6;
 const CALL: number = 7;
 
+const precedences = {
+  [token.EQ]: EQUALS,
+  [token.NOT_EQ]: EQUALS,
+  [token.LT]: LESSGREATER,
+  [token.GT]: LESSGREATER,
+  [token.PLUS]: SUM,
+  [token.MINUS]: SUM,
+  [token.SLASH]: PRODUCT,
+  [token.ASTERISK]: PRODUCT,
+};
+
 export default class Parser {
   l: Lexer;
 
@@ -36,6 +47,15 @@ export default class Parser {
     this.registerPrefix(token.INT, this.parseIntegerLiteral.bind(this));
     this.registerPrefix(token.BANG, this.parsePrefixExpression.bind(this));
     this.registerPrefix(token.MINUS, this.parsePrefixExpression.bind(this));
+
+    this.registerInfix(token.PLUS, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.MINUS, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.SLASH, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.ASTERISK, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.EQ, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.NOT_EQ, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.LT, this.parseInfixExpression.bind(this));
+    this.registerInfix(token.GT, this.parseInfixExpression.bind(this));
 
     this.nextToken();
     this.nextToken();
@@ -162,7 +182,17 @@ export default class Parser {
     const prefix: ?prefixParseFn = this.prefixParseFns.get(this.curToken.Type);
     if (!prefix) return null;
 
-    const leftExp = prefix();
+    let leftExp: ?ast.Expression = prefix();
+
+    while (!this.peekTokenIs(token.SEMICOLON) && precedence < this.peekPrecedence()) {
+      const infix: ?infixParseFn = this.infixParseFns.get(this.peekToken.Type);
+      if (!infix) return leftExp;
+
+      this.nextToken();
+
+      if (!leftExp) return null;
+      leftExp = infix(leftExp);
+    }
 
     return leftExp;
   }
@@ -197,6 +227,32 @@ export default class Parser {
     if (!right) return null;
 
     expression.Right = right;
+
+    return expression;
+  }
+
+  peekPrecedence(): number {
+    return precedences[this.peekToken.Type] || LOWEST;
+  }
+
+  curPrecedence(): number {
+    return precedences[this.curToken.Type] || LOWEST;
+  }
+
+  parseInfixExpression(left: ast.Expression): ?ast.Expression {
+    const expression: ast.InfixExpression = new ast.InfixExpression(
+      this.curToken,
+      this.curToken.Literal,
+      left,
+    );
+
+    const precedence: number = this.curPrecedence();
+    this.nextToken();
+
+    const exp: ?ast.Expression = this.parseExpression(precedence);
+    if (!exp) return null;
+
+    expression.Right = exp;
 
     return expression;
   }

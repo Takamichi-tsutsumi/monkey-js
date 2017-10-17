@@ -142,3 +142,26 @@ export class PrefixExpression implements Expression {
     return `(${this.Operator}${this.Right.toString()})`;
   }
 }
+
+export class InfixExpression implements Expression {
+  Token: token.Token;
+  Left: Expression;
+  Operator: string;
+  Right: Expression;
+
+  constructor(tok: token.Token, op: string, left: Expression): void {
+    this.Token = tok;
+    this.Operator = op;
+    this.Left = left;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `(${this.Left.toString()} ${this.Operator} ${this.Right.toString()})`;
+  }
+}

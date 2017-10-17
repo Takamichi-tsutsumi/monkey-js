@@ -170,3 +170,66 @@ test('test parsing prefix expressions', (t) => {
     t.pass();
   });
 });
+
+test('test parsing infix expressions', (t) => {
+  const infixTests: Array<{
+    input: string,
+    leftValue: number,
+    operator: string,
+    rightValue: number,
+  }> = [
+    { input: '5 + 5;', leftValue: 5, operator: '+', rightValue: 5 },
+    { input: '5 - 5;', leftValue: 5, operator: '-', rightValue: 5 },
+    { input: '5 * 5;', leftValue: 5, operator: '*', rightValue: 5 },
+    { input: '5 / 5;', leftValue: 5, operator: '/', rightValue: 5 },
+    { input: '5 > 5;', leftValue: 5, operator: '>', rightValue: 5 },
+    { input: '5 < 5;', leftValue: 5, operator: '<', rightValue: 5 },
+    { input: '5 == 5;', leftValue: 5, operator: '==', rightValue: 5 },
+    { input: '5 != 5;', leftValue: 5, operator: '!=', rightValue: 5 },
+  ];
+
+  infixTests.forEach((tt) => {
+    const l: Lexer = new Lexer(tt.input);
+    const p: Parser = new Parser(l);
+    const program: ast.Program = p.ParseProgram();
+    checkParserErrors(t, p);
+
+    t.is(program.Statements.length, 1);
+
+    const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+
+    const exp: ast.InfixExpression = ((stmt.Expression: any): ast.InfixExpression);
+
+    testIntegerLiteral(t, exp.Right, tt.leftValue);
+
+    t.is(exp.Operator, tt.operator);
+
+    testIntegerLiteral(t, exp.Left, tt.rightValue);
+  });
+  t.pass();
+});
+
+// test('test operator precedence parsing', (t) => {
+//   const tests: Array<{ input: string, expected: string }> = [
+//     { input: '!-a', expected: '(!(-a))' },
+//     { input: 'a + b + c', expected: '((a + b) + c)' },
+//     { input: 'a + b - c', expected: '((a + b) - c)' },
+//     { input: 'a * b * c', expected: '((a * b) * c)' },
+//     { input: 'a * b / c', expected: '((a * b) / c)' },
+//     { input: 'a + b / c', expected: '(a + (b / c))' },
+//     { input: 'a + b * c + d / e - f', expected: '(((a + (b * c)) + (d / e)) - f)' },
+//     { input: '3 + 4; -5 * 5', expected: '(3 + 4)((-5) * 5)' },
+//     { input: '5 > 4 == 3 < 4', expected: '((5 > 4) == (3 < 4))' },
+//     { input: '5 < 4 != 3 > 4', expected: '((5 < 4) != (3 > 4))' },
+//     { input: '((5 < 4) != (3 > 4))', expected: '((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))' },
+//   ];
+//
+//   tests.forEach((tt) => {
+//     const l: Lexer = new Lexer(tt.input);
+//     const p: Parser = new Parser(l);
+//     const program: ast.Program = p.ParseProgram();
+//     checkParserErrors(t, p);
+//
+//     t.is(program.toString(), tt.expected);
+//   });
+// });
