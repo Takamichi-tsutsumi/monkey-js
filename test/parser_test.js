@@ -28,6 +28,52 @@ const testLetStatement = (t, s: ast.Statement, name: string): boolean => {
   return true;
 };
 
+const testIntegerLiteral = (t, il: ast.Expression, value: number): boolean => {
+  const integ: ast.IntegerLiteral = ((il: any): ast.IntegerLiteral);
+
+  t.is(integ.Value, value);
+  t.is(integ.TokenLiteral(), value.toString());
+
+  return true;
+};
+
+const testIdentifier = (t, exp: ast.Expression, value: string): boolean => {
+  const ident = ((exp: any): ast.Identifier);
+
+  t.is(ident.Value, value);
+
+  t.is(ident.TokenLiteral(), value);
+
+  return true;
+};
+
+const testLiteralExpression = (t, exp: ast.Expression, expected: any): boolean => {
+  const v = expected;
+
+  switch (typeof v) {
+    case 'number':
+      return testIntegerLiteral(t, exp, v);
+    case 'string':
+      return testIdentifier(t, exp, v);
+    default:
+      t.fail(`type of exp not handled. got=${exp.toString()}`);
+  }
+
+  return false;
+};
+
+const testInfixExpression = (t, exp: ast.Expression, left: any, operator: string, right: any) => {
+  const opExp = ((exp: any): ast.InfixExpression);
+
+  testLiteralExpression(t, opExp.Left, left);
+
+  t.is(opExp.Operator, operator);
+
+  testLiteralExpression(t, opExp.Right, right);
+
+  t.pass();
+};
+
 const checkParserErrors = (t, p: Parser): void => {
   const errors = p.Errors();
   if (errors.length === 0) return;
@@ -131,15 +177,6 @@ test('test integer literal expression', (t) => {
 
   t.is(literal.TokenLiteral(), '5');
 });
-
-const testIntegerLiteral = (t, il: ast.Expression, value: number): boolean => {
-  const integ: ast.IntegerLiteral = ((il: any): ast.IntegerLiteral);
-
-  t.is(integ.Value, value);
-  t.is(integ.TokenLiteral(), value.toString());
-
-  return true;
-};
 
 test('test parsing prefix expressions', (t) => {
   const tests: Array<{
