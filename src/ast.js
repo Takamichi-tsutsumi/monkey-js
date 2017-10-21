@@ -185,3 +185,46 @@ export class Boolean {
     return this.Token.Literal;
   }
 }
+
+export class IfExpression {
+  Token: token.Token;
+  Condition: Expression;
+  Consequence: BlockStatement;
+  Alternative: ?BlockStatement;
+
+  constructor(tok: token.Token): void {
+    this.Token = tok;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `if ${this.Condition.toString()} ${this.Consequence.toString()}${this.Alternative
+      ? ` else ${this.Alternative.toString()}`
+      : ''}`;
+  }
+}
+
+export class BlockStatement {
+  Token: token.Token;
+  Statements: Array<Statement>;
+
+  constructor(tok: token.Token) {
+    this.Token = tok;
+    this.Statements = [];
+  }
+
+  statementNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return JSON.stringify(this);
+  }
+}

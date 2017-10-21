@@ -56,6 +56,9 @@ export default class Parser {
     // register grouped expression
     this.registerPrefix(token.LPAREN, this.parseGroupedExpression.bind(this));
 
+    // register parse if expression
+    this.registerPrefix(token.IF, this.parseIfExpression.bind(this));
+
     // register parse function for infix
     this.registerInfix(token.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(token.MINUS, this.parseInfixExpression.bind(this));
@@ -280,5 +283,51 @@ export default class Parser {
     }
 
     return exp;
+  }
+
+  parseIfExpression(): ?ast.Expression {
+    const expression: ast.IfExpression = new ast.IfExpression(this.curToken);
+
+    if (!this.expectPeek(token.LPAREN)) return null;
+
+    this.nextToken();
+    const exp: ?ast.Expression = this.parseExpression(LOWEST);
+    if (!exp) return null;
+
+    expression.Condition = exp;
+
+    if (!this.expectPeek(token.RPAREN)) return null;
+
+    if (!this.expectPeek(token.LBRACE)) return null;
+
+    const blk: ?ast.BlockStatement = this.parseBlockStatement();
+    if (!blk) return null;
+
+    expression.Consequence = blk;
+
+    if (this.peekTokenIs(token.ELSE)) {
+      this.nextToken();
+      if (!this.expectPeek(token.LBRACE)) return null;
+
+      expression.Alternative = this.parseBlockStatement();
+    }
+
+    return expression;
+  }
+
+  parseBlockStatement(): ?ast.BlockStatement {
+    const block: ast.BlockStatement = new ast.BlockStatement(this.curToken);
+
+    this.nextToken();
+
+    if (!this.curTokenIs(token.RBRACE) && !this.curTokenIs(token.EOF)) {
+      const stmt: ?ast.Statement = this.parseStatement();
+
+      if (stmt) block.Statements.push(stmt);
+
+      this.nextToken();
+    }
+
+    return block;
   }
 }

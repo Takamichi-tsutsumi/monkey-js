@@ -71,7 +71,7 @@ const testInfixExpression = (t, exp: ast.Expression, left: any, operator: string
 
   testLiteralExpression(t, opExp.Right, right);
 
-  t.pass();
+  return true;
 };
 
 const checkParserErrors = (t, p: Parser): void => {
@@ -288,4 +288,58 @@ test('test boolean literal expression', (t) => {
   t.is(literal.Value, true);
 
   t.is(literal.TokenLiteral(), 'true');
+});
+
+test('test if expression', (t) => {
+  const input: string = 'if (x < y) { x }';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const exp: ast.IfExpression = ((stmt.Expression: any): ast.IfExpression);
+
+  testInfixExpression(t, exp.Condition, 'x', '<', 'y');
+  t.is(exp.Consequence.Statements.length, 1);
+  const consequence: ast.ExpressionStatement = ((exp.Consequence
+    .Statements[0]: any): ast.ExpressionStatement);
+  testIdentifier(t, consequence.Expression, 'x');
+
+  t.is(exp.Alternative, undefined);
+});
+
+test('test if else expression', (t) => {
+  const input: string = 'if (x < y) { x } else { y }';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const exp: ast.IfExpression = ((stmt.Expression: any): ast.IfExpression);
+
+  testInfixExpression(t, exp.Condition, 'x', '<', 'y');
+  t.is(exp.Consequence.Statements.length, 1);
+  const consequence: ast.ExpressionStatement = ((exp.Consequence
+    .Statements[0]: any): ast.ExpressionStatement);
+  testIdentifier(t, consequence.Expression, 'x');
+
+  if (!exp.Alternative) {
+    t.fail('alternative does not exists');
+    return;
+  }
+
+  t.is(exp.Alternative.Statements.length, 1);
+  const alternative: ast.ExpressionStatement = ((exp.Alternative
+    .Statements[0]: any): ast.ExpressionStatement);
+  testIdentifier(t, alternative.Expression, 'y');
 });
