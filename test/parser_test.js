@@ -270,3 +270,22 @@ test('test parsing infix expressions', (t) => {
 //     t.is(program.toString(), tt.expected);
 //   });
 // });
+
+test('test boolean literal expression', (t) => {
+  const input: string = 'true;';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const literal: ast.Boolean = ((stmt.Expression: any): ast.Boolean);
+
+  t.is(literal.Value, true);
+
+  t.is(literal.TokenLiteral(), 'true');
+});

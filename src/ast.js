@@ -165,3 +165,23 @@ export class InfixExpression implements Expression {
     return `(${this.Left.toString()} ${this.Operator} ${this.Right.toString()})`;
   }
 }
+
+export class Boolean {
+  Token: token.Token;
+  Value: boolean;
+
+  constructor(tok: token.Token, val: boolean): void {
+    this.Token = tok;
+    this.Value = val;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return this.Token.Literal;
+  }
+}
