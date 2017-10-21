@@ -250,3 +250,24 @@ export class FunctionLiteral {
       : ''}) ${this.Body.toString()}`;
   }
 }
+
+export class CallExpression {
+  Token: token.Token;
+  Func: Expression;
+  Arguments: Array<Expression>;
+
+  constructor(tok: token.Token, func: Expression) {
+    this.Token = tok;
+    this.Func = func;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `${this.Func.toString()}(${this.Arguments.map(arg => arg.toString()).join(',')})`;
+  }
+}

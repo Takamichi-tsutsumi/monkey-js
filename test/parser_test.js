@@ -404,3 +404,25 @@ test('test function parameters parsing', (t) => {
     });
   });
 });
+
+test('test call expression parsing', (t) => {
+  const input: string = 'add(1, 2 * 3, 4 + 5);';
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const exp: ast.CallExpression = ((stmt.Expression: any): ast.CallExpression);
+
+  testIdentifier(t, exp.Func, 'add');
+
+  t.is(exp.Arguments.length, 3);
+
+  testLiteralExpression(t, exp.Arguments[0], 1);
+  testInfixExpression(t, exp.Arguments[1], 2, '*', 3);
+  testInfixExpression(t, exp.Arguments[2], 4, '+', 5);
+});

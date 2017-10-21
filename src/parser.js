@@ -24,6 +24,7 @@ const precedences = {
   [token.MINUS]: SUM,
   [token.SLASH]: PRODUCT,
   [token.ASTERISK]: PRODUCT,
+  [token.LPAREN]: CALL,
 };
 
 export default class Parser {
@@ -71,6 +72,9 @@ export default class Parser {
     this.registerInfix(token.NOT_EQ, this.parseInfixExpression.bind(this));
     this.registerInfix(token.LT, this.parseInfixExpression.bind(this));
     this.registerInfix(token.GT, this.parseInfixExpression.bind(this));
+
+    // register parse call expression
+    this.registerInfix(token.LPAREN, this.parseCallExpression.bind(this));
 
     this.nextToken();
     this.nextToken();
@@ -373,5 +377,34 @@ export default class Parser {
     if (!this.expectPeek(token.RPAREN)) return null;
 
     return identifiers;
+  }
+
+  parseCallExpression(func: ast.Expression): ?ast.Expression {
+    const exp: ast.CallExpression = new ast.CallExpression(this.curToken, func);
+    exp.Arguments = this.parseCallArguments();
+
+    return exp;
+  }
+
+  parseCallArguments(): Array<ast.Expression> {
+    const args: Array<ast.Expression> = [];
+
+    if (this.peekTokenIs(token.RPAREN)) {
+      this.nextToken();
+      return args;
+    }
+
+    this.nextToken();
+    args.push(this.parseExpression(LOWEST));
+
+    while (this.peekTokenIs(token.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      args.push(this.parseExpression(LOWEST));
+    }
+
+    if (!this.expectPeek(token.RPAREN)) return [];
+
+    return args;
   }
 }
