@@ -311,6 +311,8 @@ test('test if expression', (t) => {
   testIdentifier(t, consequence.Expression, 'x');
 
   t.is(exp.Alternative, undefined);
+
+  t.pass();
 });
 
 test('test if else expression', (t) => {
@@ -342,4 +344,63 @@ test('test if else expression', (t) => {
   const alternative: ast.ExpressionStatement = ((exp.Alternative
     .Statements[0]: any): ast.ExpressionStatement);
   testIdentifier(t, alternative.Expression, 'y');
+
+  t.pass();
+});
+
+test('test function literal parsing', (t) => {
+  const input: string = 'fn(x, y) { x + y; }';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const func: ast.FunctionLiteral = ((stmt.Expression: any): ast.FunctionLiteral);
+
+  t.is(func.Parameters.length, 2);
+
+  testLiteralExpression(t, func.Parameters[0], 'x');
+  testLiteralExpression(t, func.Parameters[1], 'y');
+
+  t.is(func.Body.Statements.length, 1);
+
+  const bodyStmt: ast.ExpressionStatement = ((func.Body
+    .Statements[0]: any): ast.ExpressionStatement);
+
+  testInfixExpression(t, bodyStmt.Expression, 'x', '+', 'y');
+
+  t.pass();
+});
+
+test('test function parameters parsing', (t) => {
+  const tests: Array<{
+    input: string,
+    expectedParams: Array<string>,
+  }> = [
+    { input: 'fn() {};', expectedParams: [] },
+    { input: 'fn(x) {};', expectedParams: ['x'] },
+    { input: 'fn(x, y, z) {};', expectedParams: ['x', 'y', 'z'] },
+  ];
+
+  tests.forEach((tt) => {
+    const l: Lexer = new Lexer(tt.input);
+    const p: Parser = new Parser(l);
+
+    const program: ast.Program = p.ParseProgram();
+    checkParserErrors(t, p);
+
+    const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+    const func: ast.FunctionLiteral = ((stmt.Expression: any): ast.FunctionLiteral);
+
+    t.is(func.Parameters.length, tt.expectedParams.length);
+
+    tt.expectedParams.forEach((ident, i) => {
+      testLiteralExpression(t, func.Parameters[i], ident);
+    });
+  });
 });

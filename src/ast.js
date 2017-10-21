@@ -228,3 +228,25 @@ export class BlockStatement {
     return JSON.stringify(this);
   }
 }
+
+export class FunctionLiteral {
+  Token: token.Token; // the 'fn' token
+  Parameters: Array<Identifier>;
+  Body: BlockStatement;
+
+  constructor(tok: token.Token) {
+    this.Token = tok;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `${this.TokenLiteral()}(${this.Parameters
+      ? this.Parameters.map(p => p.toString()).join(',')
+      : ''}) ${this.Body.toString()}`;
+  }
+}

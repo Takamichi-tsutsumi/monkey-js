@@ -59,6 +59,9 @@ export default class Parser {
     // register parse if expression
     this.registerPrefix(token.IF, this.parseIfExpression.bind(this));
 
+    // register parse function literal
+    this.registerPrefix(token.FUNCTION, this.parseFunctionLiteral.bind(this));
+
     // register parse function for infix
     this.registerInfix(token.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(token.MINUS, this.parseInfixExpression.bind(this));
@@ -329,5 +332,46 @@ export default class Parser {
     }
 
     return block;
+  }
+
+  parseFunctionLiteral(): ?ast.Expression {
+    const lit: ast.FunctionLiteral = new ast.FunctionLiteral(this.curToken);
+
+    if (!this.expectPeek(token.LPAREN)) return null;
+
+    lit.Parameters = this.parseFunctionParameters();
+
+    if (!this.expectPeek(token.LBRACE)) return null;
+
+    const body: ?ast.BlockStatement = this.parseBlockStatement();
+    if (!body) return null;
+
+    lit.Body = body;
+
+    return lit;
+  }
+
+  parseFunctionParameters(): ?Array<ast.Identifier> {
+    const identifiers: Array<ast.Identifier> = [];
+
+    if (this.peekTokenIs(token.RPAREN)) {
+      this.nextToken();
+      return identifiers;
+    }
+
+    this.nextToken();
+    let ident: ast.Identifier = new ast.Identifier(this.curToken, this.curToken.Literal);
+    identifiers.push(ident);
+
+    while (this.peekTokenIs(token.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      ident = new ast.Identifier(this.curToken, this.curToken.Literal);
+      identifiers.push(ident);
+    }
+
+    if (!this.expectPeek(token.RPAREN)) return null;
+
+    return identifiers;
   }
 }
