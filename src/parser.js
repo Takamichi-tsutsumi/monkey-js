@@ -113,7 +113,6 @@ export default class Parser {
 
   parseLetStatement(): ?ast.LetStatement {
     const stmt: ast.LetStatement = new ast.LetStatement(this.curToken);
-    // console.log(stmt);
 
     if (!this.expectPeek(token.IDENT)) {
       return null;
@@ -125,7 +124,9 @@ export default class Parser {
       return null;
     }
 
-    // TODO: skipping the expressions until we encounter a semicolon
+    this.nextToken();
+
+    stmt.Value = this.parseExpression(LOWEST);
 
     while (!this.curTokenIs(token.SEMICOLON)) {
       this.nextToken();
@@ -139,7 +140,8 @@ export default class Parser {
 
     this.nextToken();
 
-    // TODO: skipping the expressions until we encounter a semicolon
+    stmt.ReturnValue = this.parseExpression(LOWEST);
+
     while (!this.curTokenIs(token.SEMICOLON)) {
       this.nextToken();
     }

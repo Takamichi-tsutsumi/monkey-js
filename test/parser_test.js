@@ -47,6 +47,16 @@ const testIdentifier = (t, exp: ast.Expression, value: string): boolean => {
   return true;
 };
 
+const testBoolean = (t, exp: ast.Expression, value: boolean): boolean => {
+  const bool = ((exp: any): ast.Boolean);
+
+  t.is(bool.Value, value);
+
+  t.is(bool.TokenLiteral(), value.toString());
+
+  return true;
+};
+
 const testLiteralExpression = (t, exp: ast.Expression, expected: any): boolean => {
   const v = expected;
 
@@ -55,6 +65,8 @@ const testLiteralExpression = (t, exp: ast.Expression, expected: any): boolean =
       return testIntegerLiteral(t, exp, v);
     case 'string':
       return testIdentifier(t, exp, v);
+    case 'boolean':
+      return testBoolean(t, exp, v);
     default:
       t.fail(`type of exp not handled. got=${exp.toString()}`);
   }
@@ -102,15 +114,32 @@ test('test let statements', (t) => {
   t.truthy(program);
   t.is(program.Statements.length, 3);
 
-  const tests: Array<{ expectedIdentifier: string }> = [
-    { expectedIdentifier: 'x' },
-    { expectedIdentifier: 'y' },
-    { expectedIdentifier: 'foobar' },
+  const tests: Array<{
+    input: string,
+    expectedIdentifier: string,
+    expectedValue: any,
+  }> = [
+    { input: 'let x = 5;', expectedIdentifier: 'x', expectedValue: 5 },
+    { input: 'let y = true;', expectedIdentifier: 'y', expectedValue: true },
+    { input: 'let foobar = y;', expectedIdentifier: 'foobar', expectedValue: 'y' },
   ];
 
-  tests.forEach((tt, i) => {
-    const stmt: ast.Statement = program.Statements[i];
+  tests.forEach((tt) => {
+    const lx: Lexer = new Lexer(tt.input);
+    const pr: Parser = new Parser(lx);
+
+    const prog: ast.Program = pr.ParseProgram();
+    checkParserErrors(t, pr);
+
+    t.is(prog.Statements.length, 1);
+
+    const stmt: ast.Statement = prog.Statements[0];
     testLetStatement(t, stmt, tt.expectedIdentifier);
+
+    const val: ast.LetStatement = ((stmt: any): ast.LetStatement);
+    t.log(val.toString());
+
+    testLiteralExpression(t, val.Value, tt.expectedValue);
   });
 
   t.pass();
