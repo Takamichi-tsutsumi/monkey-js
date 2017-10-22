@@ -1,14 +1,22 @@
 // @flow
 import readline from 'readline';
 import Lexer from './lexer';
+import Parser from './parser';
 import type { Token } from './token';
 import * as token from './token';
+import * as ast from './ast';
 
 const printToken = (out: stream$Writable, tok: Token): void => {
   out.write(`{ Type: ${tok.Type}, Literal: ${tok.Literal} }\n`);
 };
 
 const PROMPT: string = '>> ';
+
+const printParserError = (output: stream$Writable, errors: Array<string>) => {
+  errors.forEach((err) => {
+    output.write(`\t${err}\n`);
+  });
+};
 
 export const Start = (input: stream$Readable, output: stream$Writable): void => {
   const rl = readline.createInterface({
@@ -19,12 +27,17 @@ export const Start = (input: stream$Readable, output: stream$Writable): void => 
   output.write(PROMPT);
   rl.on('line', (line) => {
     const l: Lexer = new Lexer(line);
-    let tok: Token = l.nextToken();
+    const p: Parser = new Parser(l);
 
-    while (tok.Type !== token.EOF) {
-      printToken(output, tok);
-      tok = l.nextToken();
+    const program: ast.Program = p.ParseProgram();
+    if (p.Errors().length !== 0) {
+      printParserError(output, p.Errors());
+      output.write(PROMPT);
+      return;
     }
+
+    output.write(program.toString());
+    output.write('\n');
     output.write(PROMPT);
   });
 };
