@@ -8,8 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "babel src/ -d lib/",
-    "prepublish": "yarn run build",
-    "precommit": "yarn run test",
+    "prepush": "yarn run test",
     "test": "ava --tap | faucet",
     "test:watch": "ava --watch"
   },
