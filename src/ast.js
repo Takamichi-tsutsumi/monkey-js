@@ -17,7 +17,7 @@ export class Program {
   Statements: Array<Statement>;
 
   toString(): string {
-    return this.Statements.map(stmt => stmt.toString()).join(' ');
+    return this.Statements.map(stmt => stmt.toString()).join('');
   }
 
   TokenLiteral(): string {
@@ -227,7 +227,7 @@ export class BlockStatement {
   }
 
   toString(): string {
-    return this.Statements.map(stmt => stmt.toString()).join(' ');
+    return this.Statements.map(stmt => stmt.toString()).join('');
   }
 }
 
