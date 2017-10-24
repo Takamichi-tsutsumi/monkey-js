@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "babel src/ -d lib/",
-    "prepublish": "yarn run build",
+    "prepush": "yarn run test",
     "test": "ava --tap | faucet",
     "test:watch": "ava --watch"
   },
@@ -29,6 +29,7 @@
     "faucet": "^0.0.1",
     "flow-bin": "^0.55.0",
     "flow-typed": "^2.1.5",
+    "husky": "^0.14.3",
     "prettier-eslint": "^8.2.0",
     "prettier-eslint-cli": "^4.4.0"
   },
