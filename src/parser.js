@@ -128,7 +128,7 @@ export default class Parser {
 
     stmt.Value = this.parseExpression(LOWEST);
 
-    while (!this.curTokenIs(token.SEMICOLON)) {
+    if (this.curTokenIs(token.SEMICOLON)) {
       this.nextToken();
     }
 
@@ -142,7 +142,7 @@ export default class Parser {
 
     stmt.ReturnValue = this.parseExpression(LOWEST);
 
-    while (!this.curTokenIs(token.SEMICOLON)) {
+    if (this.curTokenIs(token.SEMICOLON)) {
       this.nextToken();
     }
 
@@ -329,7 +329,7 @@ export default class Parser {
 
     this.nextToken();
 
-    if (!this.curTokenIs(token.RBRACE) && !this.curTokenIs(token.EOF)) {
+    while (!this.curTokenIs(token.RBRACE) && !this.curTokenIs(token.EOF)) {
       const stmt: ?ast.Statement = this.parseStatement();
 
       if (stmt) block.Statements.push(stmt);

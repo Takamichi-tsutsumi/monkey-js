@@ -17,7 +17,7 @@ export class Program {
   Statements: Array<Statement>;
 
   toString(): string {
-    return JSON.stringify(this);
+    return this.Statements.map(stmt => stmt.toString()).join('');
   }
 
   TokenLiteral(): string {
@@ -38,7 +38,9 @@ export class LetStatement implements Statement {
   }
 
   toString(): string {
-    return JSON.stringify(this);
+    return `${this.TokenLiteral()} ${this.Name.toString()} = ${this.Value
+      ? this.Value.toString()
+      : ''};`;
   }
 
   statementNode(): void {}
@@ -56,7 +58,7 @@ export class ReturnStatement implements Statement {
   }
 
   toString(): string {
-    return JSON.stringify(this);
+    return `${this.TokenLiteral()} ${this.ReturnValue ? this.ReturnValue.toString() : ''};`;
   }
 
   statementNode(): void {}
@@ -74,7 +76,7 @@ export class ExpressionStatement implements Statement {
   }
 
   toString(): string {
-    return JSON.stringify(this);
+    return this.Expression.toString();
   }
 
   statementNode(): void {}
@@ -88,7 +90,7 @@ export class Identifier implements Expression {
   Value: string;
 
   toString(): string {
-    return JSON.stringify(this);
+    return this.Value;
   }
 
   constructor(tok: token.Token, val: string): void {
@@ -118,7 +120,7 @@ export class IntegerLiteral implements Expression {
   }
 
   toString(): string {
-    return this.Token.Literal.toString();
+    return this.Token.Literal;
   }
 }
 
@@ -225,7 +227,7 @@ export class BlockStatement {
   }
 
   toString(): string {
-    return JSON.stringify(this);
+    return this.Statements.map(stmt => stmt.toString()).join('');
   }
 }
 
