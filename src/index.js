@@ -1,5 +1,5 @@
 /* @flow */
-import * as repl from './repl';
+import Start from './repl';
 
 (function main() {
   const username = process.env.USER;
@@ -9,5 +9,5 @@ import * as repl from './repl';
 
   process.stdout.write(`Hello ${username}! This is the Monkey programming language!\n`);
   process.stdout.write('Feel free to type in commands\n');
-  repl.Start(process.stdin, process.stdout);
+  Start(process.stdin, process.stdout);
 }());
