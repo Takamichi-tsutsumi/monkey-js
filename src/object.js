@@ -6,13 +6,17 @@ const INTEGER_OBJ = 'INTEGER';
 const BOOLEAN_OBJ = 'BOOLEAN';
 const NULL_OBJ = 'NULL';
 
-interface Obj {
+export interface Obj {
   Type(): ObjType;
   Inspect(): string;
 }
 
 export class Integer implements Obj {
   Value: number;
+
+  constructor(val: number): void {
+    this.Value = val;
+  }
 
   Type(): ObjType {
     return INTEGER_OBJ;
