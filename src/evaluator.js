@@ -3,12 +3,12 @@ import * as ast from './ast';
 import * as object from './object';
 
 // define as const
-const NULL = new object.Null();
-const TRUE = new object.Boolean(true);
-const FALSE = new object.Boolean(false);
+export const NULL = new object.Null();
+export const TRUE = new object.Boolean(true);
+export const FALSE = new object.Boolean(false);
 
-function evalStatements(stmts: Array<ast.Statement>): object.Obj {
-  let result: object.Obj;
+function evalStatements(stmts: Array<ast.Statement>): ?object.Obj {
+  let result: ?object.Obj;
 
   stmts.forEach((stmt) => {
     result = Eval(stmt);
@@ -22,7 +22,7 @@ function nativeBoolToBooleanObject(input: boolean): object.Boolean {
   return FALSE;
 }
 
-function evalBangOperatorExpression(right: object.Obj): object.Obj {
+function evalBangOperatorExpression(right: ?object.Obj): object.Obj {
   switch (right) {
     case TRUE:
       return FALSE;
@@ -35,16 +35,18 @@ function evalBangOperatorExpression(right: object.Obj): object.Obj {
   }
 }
 
-function evalMinusPrefixOperatorExpression(right: object.Obj): object.Obj {
+function evalMinusPrefixOperatorExpression(right: ?object.Obj): object.Obj {
+  if (!right) return NULL;
+
   if (right.Type() !== object.INTEGER_OBJ) {
     return NULL;
   }
 
-  const value: number = right.Value;
+  const value: number = ((right: any): object.Integer).Value;
   return new object.Integer(-value);
 }
 
-function evaluPrefixExpression(operator: string, right: object.Obj): object.Obj {
+function evaluPrefixExpression(operator: string, right: ?object.Obj): object.Obj {
   switch (operator) {
     case '!':
       return evalBangOperatorExpression(right);
@@ -57,8 +59,8 @@ function evaluPrefixExpression(operator: string, right: object.Obj): object.Obj 
 
 function evalIntegerInfixExpression(
   operator: string,
-  left: object.Obj,
-  right: object.Obj,
+  left: object.Integer,
+  right: object.Integer,
 ): object.Obj {
   const leftVal: number = left.Value;
   const rightVal: number = right.Value;
@@ -85,9 +87,15 @@ function evalIntegerInfixExpression(
   }
 }
 
-function evalInfixExpression(operator: string, left: object.Obj, right: object.Obj): object.Obj {
+function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object.Obj): object.Obj {
+  if (!left || !right) return NULL;
+
   if (left.Type() === object.INTEGER_OBJ && right.Type() === object.INTEGER_OBJ) {
-    return evalIntegerInfixExpression(operator, left, right);
+    return evalIntegerInfixExpression(
+      operator,
+      ((left: any): object.Integer),
+      ((right: any): object.Integer),
+    );
   }
   if (operator === '==') return nativeBoolToBooleanObject(left === right);
   if (operator === '!=') return nativeBoolToBooleanObject(left !== right);
@@ -98,26 +106,33 @@ function evalInfixExpression(operator: string, left: object.Obj, right: object.O
 export default function Eval(node: ast.Node): ?object.Obj {
   let right;
   let left;
+  let castedNode;
 
   switch (node.constructor) {
     // Evaluate Statements
     case ast.Program:
-      return evalStatements(node.Statements);
+      castedNode = ((node: any): ast.Program);
+      return evalStatements(castedNode.Statements);
     case ast.ExpressionStatement:
-      return Eval(node.Expression);
+      castedNode = ((node: any): ast.ExpressionStatement);
+      return Eval(castedNode.Expression);
 
     // Evaluate Expressions
     case ast.IntegerLiteral:
-      return new object.Integer(node.Value);
+      castedNode = ((node: any): ast.IntegerLiteral);
+      return new object.Integer(castedNode.Value);
     case ast.Boolean:
-      return nativeBoolToBooleanObject(node.Value);
+      castedNode = ((node: any): ast.Boolean);
+      return nativeBoolToBooleanObject(castedNode.Value);
     case ast.PrefixExpression:
-      right = Eval(node.Right);
-      return evaluPrefixExpression(node.Operator, right);
+      castedNode = ((node: any): ast.PrefixExpression);
+      right = Eval(castedNode.Right);
+      return evaluPrefixExpression(castedNode.Operator, right);
     case ast.InfixExpression:
-      left = Eval(node.Left);
-      right = Eval(node.Right);
-      return evalInfixExpression(node.Operator, left, right);
+      castedNode = ((node: any): ast.InfixExpression);
+      left = Eval(castedNode.Left);
+      right = Eval(castedNode.Right);
+      return evalInfixExpression(castedNode.Operator, left, right);
     default:
       return null;
   }
