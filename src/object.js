@@ -5,6 +5,7 @@ export type ObjType = string;
 export const INTEGER_OBJ = 'INTEGER';
 export const BOOLEAN_OBJ = 'BOOLEAN';
 export const NULL_OBJ = 'NULL';
+export const RETURN_VALUE_OBJ = 'RETURN_VALUE';
 
 export interface Obj {
   Type(): ObjType;
@@ -50,5 +51,21 @@ export class Null implements Obj {
 
   Inspect(): string {
     return 'null';
+  }
+}
+
+export class ReturnValue implements Obj {
+  Value: Obj;
+
+  constructor(val: Obj): void {
+    this.Value = val;
+  }
+
+  Type(): ObjType {
+    return RETURN_VALUE_OBJ;
+  }
+
+  Inspect(): string {
+    return this.Value.Inspect();
   }
 }

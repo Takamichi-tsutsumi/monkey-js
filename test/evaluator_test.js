@@ -144,3 +144,32 @@ test('if else expressions', (t) => {
 
   t.pass();
 });
+
+test('return statements', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: any,
+  }> = [
+    { input: 'return 10;', expected: 10 },
+    { input: 'return 10; 9;', expected: 10 },
+    { input: '9; return 2 * 5; 9;', expected: 10 },
+    {
+      input: `
+      if (10 > 1) {
+        if (10 > 1) {
+          return 10;
+        }
+
+        return 1;
+      }`,
+      expected: 10,
+    },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: ?object.Obj = testEval(tt.input);
+    testIntegerObject(t, evaluated, tt.expected);
+  });
+
+  t.pass();
+});

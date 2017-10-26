@@ -7,11 +7,30 @@ export const NULL = new object.Null();
 export const TRUE = new object.Boolean(true);
 export const FALSE = new object.Boolean(false);
 
-function evalStatements(stmts: Array<ast.Statement>): ?object.Obj {
+function evalProgram(program: ast.Program): ?object.Obj {
   let result: ?object.Obj;
 
-  stmts.forEach((stmt) => {
+  program.Statements.some((stmt) => {
     result = Eval(stmt);
+
+    if (result && result.constructor === object.ReturnValue) {
+      result = ((result: any): object.ReturnValue).Value;
+      return true;
+    }
+  });
+
+  return result;
+}
+
+function evalBlockStatement(block: ast.BlockStatement): ?object.Obj {
+  let result: ?object.Obj;
+
+  block.Statements.some((stmt) => {
+    result = Eval(stmt);
+
+    if (result && result.Type() === object.RETURN_VALUE_OBJ) {
+      return true;
+    }
   });
 
   return result;
@@ -36,9 +55,7 @@ function evalBangOperatorExpression(right: ?object.Obj): object.Obj {
 }
 
 function evalMinusPrefixOperatorExpression(right: ?object.Obj): object.Obj {
-  if (!right) return NULL;
-
-  if (right.Type() !== object.INTEGER_OBJ) {
+  if (!right || right.Type() !== object.INTEGER_OBJ) {
     return NULL;
   }
 
@@ -103,7 +120,7 @@ function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object
   return NULL;
 }
 
-function isTruthy(obj: object.Obj): boolean {
+function isTruthy(obj: ?object.Obj): boolean {
   switch (obj) {
     case NULL:
       return false;
@@ -116,8 +133,8 @@ function isTruthy(obj: object.Obj): boolean {
   }
 }
 
-function evalIfExpression(ie: ast.IfExpression): object.Obj {
-  const condition: object.Obj = Eval(ie.Condition);
+function evalIfExpression(ie: ast.IfExpression): ?object.Obj {
+  const condition: ?object.Obj = Eval(ie.Condition);
 
   if (isTruthy(condition)) {
     return Eval(ie.Consequence);
@@ -132,12 +149,13 @@ export default function Eval(node: ast.Node): ?object.Obj {
   let right;
   let left;
   let castedNode;
+  let val;
 
   switch (node.constructor) {
     // Evaluate Statements
     case ast.Program:
       castedNode = ((node: any): ast.Program);
-      return evalStatements(castedNode.Statements);
+      return evalProgram(castedNode);
     case ast.ExpressionStatement:
       castedNode = ((node: any): ast.ExpressionStatement);
       return Eval(castedNode.Expression);
@@ -160,10 +178,13 @@ export default function Eval(node: ast.Node): ?object.Obj {
       return evalInfixExpression(castedNode.Operator, left, right);
     case ast.BlockStatement:
       castedNode = ((node: any): ast.BlockStatement);
-      return evalStatements(castedNode.Statements);
+      return evalBlockStatement(castedNode);
     case ast.IfExpression:
       castedNode = ((node: any): ast.IfExpression);
       return evalIfExpression(castedNode);
+    case ast.ReturnStatement:
+      val = Eval(((node: any): ast.ReturnStatement).ReturnValue);
+      return new object.ReturnValue(val || NULL);
     default:
       return null;
   }
