@@ -55,7 +55,50 @@ function evaluPrefixExpression(operator: string, right: object.Obj): object.Obj 
   }
 }
 
+function evalIntegerInfixExpression(
+  operator: string,
+  left: object.Obj,
+  right: object.Obj,
+): object.Obj {
+  const leftVal: number = left.Value;
+  const rightVal: number = right.Value;
+
+  switch (operator) {
+    case '+':
+      return new object.Integer(leftVal + rightVal);
+    case '-':
+      return new object.Integer(leftVal - rightVal);
+    case '*':
+      return new object.Integer(leftVal * rightVal);
+    case '/':
+      return new object.Integer(leftVal / rightVal);
+    case '<':
+      return nativeBoolToBooleanObject(leftVal < rightVal);
+    case '>':
+      return nativeBoolToBooleanObject(leftVal > rightVal);
+    case '==':
+      return nativeBoolToBooleanObject(leftVal === rightVal);
+    case '!=':
+      return nativeBoolToBooleanObject(leftVal !== rightVal);
+    default:
+      return NULL;
+  }
+}
+
+function evalInfixExpression(operator: string, left: object.Obj, right: object.Obj): object.Obj {
+  if (left.Type() === object.INTEGER_OBJ && right.Type() === object.INTEGER_OBJ) {
+    return evalIntegerInfixExpression(operator, left, right);
+  }
+  if (operator === '==') return nativeBoolToBooleanObject(left === right);
+  if (operator === '!=') return nativeBoolToBooleanObject(left !== right);
+
+  return NULL;
+}
+
 export default function Eval(node: ast.Node): ?object.Obj {
+  let right;
+  let left;
+
   switch (node.constructor) {
     // Evaluate Statements
     case ast.Program:
@@ -69,8 +112,12 @@ export default function Eval(node: ast.Node): ?object.Obj {
     case ast.Boolean:
       return nativeBoolToBooleanObject(node.Value);
     case ast.PrefixExpression:
-      const right: object.Obj = Eval(node.Right);
+      right = Eval(node.Right);
       return evaluPrefixExpression(node.Operator, right);
+    case ast.InfixExpression:
+      left = Eval(node.Left);
+      right = Eval(node.Right);
+      return evalInfixExpression(node.Operator, left, right);
     default:
       return null;
   }
