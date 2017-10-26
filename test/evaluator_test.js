@@ -25,7 +25,12 @@ test('test eval integer expression', (t) => {
   const tests: Array<{
     input: string,
     expected: number,
-  }> = [{ input: '5', expected: 5 }, { input: '10', expected: 10 }];
+  }> = [
+    { input: '5', expected: 5 },
+    { input: '10', expected: 10 },
+    { input: '-5', expected: -5 },
+    { input: '-10', expected: -10 },
+  ];
 
   tests.forEach((tt) => {
     const evaluated: number = testEval(tt.input);
@@ -47,6 +52,27 @@ test('test eval boolean expression', (t) => {
     input: string,
     expected: boolean,
   }> = [{ input: 'true', expected: true }, { input: 'false', expected: false }];
+
+  tests.forEach((tt) => {
+    const evaluated: boolean = testEval(tt.input);
+    testBooleanObject(t, evaluated, tt.expected);
+  });
+
+  t.pass();
+});
+
+test('bang operator', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: boolean,
+  }> = [
+    { input: '!true', expected: false },
+    { input: '!false', expected: true },
+    { input: '!5', expected: false },
+    { input: '!!true', expected: true },
+    { input: '!!false', expected: false },
+    { input: '!!5', expected: true },
+  ];
 
   tests.forEach((tt) => {
     const evaluated: boolean = testEval(tt.input);

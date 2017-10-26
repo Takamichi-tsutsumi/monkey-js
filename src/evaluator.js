@@ -22,6 +22,39 @@ function nativeBoolToBooleanObject(input: boolean): object.Boolean {
   return FALSE;
 }
 
+function evalBangOperatorExpression(right: object.Obj): object.Obj {
+  switch (right) {
+    case TRUE:
+      return FALSE;
+    case FALSE:
+      return TRUE;
+    case NULL:
+      return TRUE;
+    default:
+      return FALSE;
+  }
+}
+
+function evalMinusPrefixOperatorExpression(right: object.Obj): object.Obj {
+  if (right.Type() !== object.INTEGER_OBJ) {
+    return NULL;
+  }
+
+  const value: number = right.Value;
+  return new object.Integer(-value);
+}
+
+function evaluPrefixExpression(operator: string, right: object.Obj): object.Obj {
+  switch (operator) {
+    case '!':
+      return evalBangOperatorExpression(right);
+    case '-':
+      return evalMinusPrefixOperatorExpression(right);
+    default:
+      return NULL;
+  }
+}
+
 export default function Eval(node: ast.Node): ?object.Obj {
   switch (node.constructor) {
     // Evaluate Statements
@@ -35,6 +68,9 @@ export default function Eval(node: ast.Node): ?object.Obj {
       return new object.Integer(node.Value);
     case ast.Boolean:
       return nativeBoolToBooleanObject(node.Value);
+    case ast.PrefixExpression:
+      const right: object.Obj = Eval(node.Right);
+      return evaluPrefixExpression(node.Operator, right);
     default:
       return null;
   }
