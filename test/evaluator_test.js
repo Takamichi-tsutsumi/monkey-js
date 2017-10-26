@@ -4,9 +4,9 @@ import Lexer from '../src/lexer';
 import Parser from '../src/parser';
 import * as ast from '../src/ast';
 import * as object from '../src/object';
-import Eval from '../src/evaluator';
+import Eval, { NULL } from '../src/evaluator';
 
-const testEval = (input: string): object.Obj => {
+const testEval = (input: string): ?object.Obj => {
   const l: Lexer = new Lexer(input);
   const p: Parser = new Parser(l);
   const program: ast.Program = p.ParseProgram();
@@ -14,10 +14,21 @@ const testEval = (input: string): object.Obj => {
   return Eval(program);
 };
 
-const testIntegerObject = (t, obj: object.Obj, expected: number): void => {
+const testIntegerObject = (t, obj: ?object.Obj, expected: number): void => {
   const result = ((obj: any): object.Integer);
 
   t.is(typeof result.Value, 'number');
+  t.is(result.Value, expected);
+};
+
+const testNullObject = (t, obj: ?object.Obj): void => {
+  t.is(obj, NULL);
+};
+
+const testBooleanObject = (t, obj: ?object.Obj, expected: boolean): void => {
+  const result = ((obj: any): object.Boolean);
+
+  t.is(typeof result.Value, 'boolean');
   t.is(result.Value, expected);
 };
 
@@ -45,19 +56,12 @@ test('test eval integer expression', (t) => {
   ];
 
   tests.forEach((tt) => {
-    const evaluated: number = testEval(tt.input);
+    const evaluated: ?object.Obj = testEval(tt.input);
     testIntegerObject(t, evaluated, tt.expected);
   });
 
   t.pass();
 });
-
-const testBooleanObject = (t, obj: object.Obj, expected: boolean): void => {
-  const result = ((obj: any): object.Boolean);
-
-  t.is(typeof result.Value, 'boolean');
-  t.is(result.Value, expected);
-};
 
 test('test eval boolean expression', (t) => {
   const tests: Array<{
@@ -87,7 +91,7 @@ test('test eval boolean expression', (t) => {
   ];
 
   tests.forEach((tt) => {
-    const evaluated: boolean = testEval(tt.input);
+    const evaluated: ?object.Obj = testEval(tt.input);
     testBooleanObject(t, evaluated, tt.expected);
   });
 
@@ -108,8 +112,34 @@ test('bang operator', (t) => {
   ];
 
   tests.forEach((tt) => {
-    const evaluated: boolean = testEval(tt.input);
+    const evaluated: ?object.Obj = testEval(tt.input);
     testBooleanObject(t, evaluated, tt.expected);
+  });
+
+  t.pass();
+});
+
+test('if else expressions', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: any,
+  }> = [
+    { input: 'if (true) { 10 }', expected: 10 },
+    { input: 'if (false) { 10 }', expected: null },
+    { input: 'if (1) { 10 }', expected: 10 },
+    { input: 'if (1 < 2) { 10 }', expected: 10 },
+    { input: 'if (1 > 2) { 10 }', expected: null },
+    { input: 'if (1 > 2) { 10 } else { 20 }', expected: 20 },
+    { input: 'if (1 < 2) { 10 } else { 20 }', expected: 10 },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: ?object.Obj = testEval(tt.input);
+    if (typeof tt.expected === 'number') {
+      testIntegerObject(t, evaluated, tt.expected);
+    } else {
+      testNullObject(t, evaluated);
+    }
   });
 
   t.pass();

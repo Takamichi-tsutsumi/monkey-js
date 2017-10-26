@@ -103,6 +103,31 @@ function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object
   return NULL;
 }
 
+function isTruthy(obj: object.Obj): boolean {
+  switch (obj) {
+    case NULL:
+      return false;
+    case TRUE:
+      return true;
+    case FALSE:
+      return false;
+    default:
+      return true;
+  }
+}
+
+function evalIfExpression(ie: ast.IfExpression): object.Obj {
+  const condition: object.Obj = Eval(ie.Condition);
+
+  if (isTruthy(condition)) {
+    return Eval(ie.Consequence);
+  } else if (ie.Alternative) {
+    return Eval(ie.Alternative);
+  }
+
+  return NULL;
+}
+
 export default function Eval(node: ast.Node): ?object.Obj {
   let right;
   let left;
@@ -133,6 +158,12 @@ export default function Eval(node: ast.Node): ?object.Obj {
       left = Eval(castedNode.Left);
       right = Eval(castedNode.Right);
       return evalInfixExpression(castedNode.Operator, left, right);
+    case ast.BlockStatement:
+      castedNode = ((node: any): ast.BlockStatement);
+      return evalStatements(castedNode.Statements);
+    case ast.IfExpression:
+      castedNode = ((node: any): ast.IfExpression);
+      return evalIfExpression(castedNode);
     default:
       return null;
   }
