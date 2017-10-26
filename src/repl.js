@@ -5,6 +5,8 @@ import Parser from './parser';
 import type { Token } from './token';
 import * as token from './token';
 import * as ast from './ast';
+import * as object from './object';
+import Eval from './evaluator';
 
 const printToken = (out: stream$Writable, tok: Token): void => {
   out.write(`{ Type: ${tok.Type}, Literal: ${tok.Literal} }\n`);
@@ -18,7 +20,7 @@ const printParserError = (output: stream$Writable, errors: Array<string>) => {
   });
 };
 
-export const Start = (input: stream$Readable, output: stream$Writable): void => {
+const Start = (input: stream$Readable, output: stream$Writable): void => {
   const rl = readline.createInterface({
     input,
     output,
@@ -36,8 +38,14 @@ export const Start = (input: stream$Readable, output: stream$Writable): void => 
       return;
     }
 
-    output.write(program.toString());
+    const evaluated: object.Obj = Eval(program);
+    if (evaluated) {
+      output.write(evaluated.Inspect());
+    }
+
     output.write('\n');
     output.write(PROMPT);
   });
 };
+
+export default Start;
