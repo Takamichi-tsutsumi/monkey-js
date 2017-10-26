@@ -34,3 +34,24 @@ test('test eval integer expression', (t) => {
 
   t.pass();
 });
+
+const testBooleanObject = (t, obj: object.Obj, expected: boolean): void => {
+  const result = ((obj: any): object.Boolean);
+
+  t.is(typeof result.Value, 'boolean');
+  t.is(result.Value, expected);
+};
+
+test('test eval boolean expression', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: boolean,
+  }> = [{ input: 'true', expected: true }, { input: 'false', expected: false }];
+
+  tests.forEach((tt) => {
+    const evaluated: boolean = testEval(tt.input);
+    testBooleanObject(t, evaluated, tt.expected);
+  });
+
+  t.pass();
+});

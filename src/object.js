@@ -30,6 +30,10 @@ export class Integer implements Obj {
 export class Boolean implements Obj {
   Value: boolean;
 
+  constructor(val: boolean): void {
+    this.Value = val;
+  }
+
   Type(): ObjType {
     return BOOLEAN_OBJ;
   }
