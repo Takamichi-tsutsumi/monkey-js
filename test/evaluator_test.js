@@ -173,3 +173,29 @@ test('return statements', (t) => {
 
   t.pass();
 });
+
+test('error handling', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: string,
+  }> = [
+    { input: '5 + true;', expected: 'type mismatch: INTEGER + BOOLEAN' },
+    { input: '5 + true; 5;', expected: 'type mismatch: INTEGER + BOOLEAN' },
+    { input: '-true', expected: 'unknown operator: -BOOLEAN' },
+    { input: 'true + false', expected: 'unknown operator: BOOLEAN + BOOLEAN' },
+    { input: '5; true + false; 5;', expected: 'unknown operator: BOOLEAN + BOOLEAN' },
+    { input: 'if (10 > 1) { true + false; }', expected: 'unknown operator: BOOLEAN + BOOLEAN' },
+    {
+      input: 'if (10 > 1) { if (10 > 1) { return true + false; } return 1; }',
+      expected: 'unknown operator: BOOLEAN + BOOLEAN',
+    },
+  ];
+
+  tests.forEach((tt, idx) => {
+    const evaluated: ?object.Obj = testEval(tt.input);
+    t.is(evaluated.constructor, object.Error, `test constructor case[${idx}]`);
+    t.is(((evaluated: any): object.Error).Message, tt.expected, `test expected case[${idx}]`);
+  });
+
+  t.pass();
+});

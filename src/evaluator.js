@@ -13,9 +13,16 @@ function evalProgram(program: ast.Program): ?object.Obj {
   program.Statements.some((stmt) => {
     result = Eval(stmt);
 
-    if (result && result.constructor === object.ReturnValue) {
-      result = ((result: any): object.ReturnValue).Value;
-      return true;
+    if (result) {
+      switch (result.constructor) {
+        case object.ReturnValue:
+          result = ((result: any): object.ReturnValue).Value;
+          return true;
+        case object.Error:
+          return true;
+        default:
+          return false;
+      }
     }
   });
 
@@ -28,7 +35,10 @@ function evalBlockStatement(block: ast.BlockStatement): ?object.Obj {
   block.Statements.some((stmt) => {
     result = Eval(stmt);
 
-    if (result && result.Type() === object.RETURN_VALUE_OBJ) {
+    if (
+      result &&
+      (result.Type() === object.RETURN_VALUE_OBJ || result.Type() === object.ERROR_OBJ)
+    ) {
       return true;
     }
   });
@@ -55,22 +65,22 @@ function evalBangOperatorExpression(right: ?object.Obj): object.Obj {
 }
 
 function evalMinusPrefixOperatorExpression(right: ?object.Obj): object.Obj {
-  if (!right || right.Type() !== object.INTEGER_OBJ) {
-    return NULL;
+  if (right.Type() !== object.INTEGER_OBJ) {
+    return new object.Error(`unknown operator: -${right.Type()}`);
   }
 
   const value: number = ((right: any): object.Integer).Value;
   return new object.Integer(-value);
 }
 
-function evaluPrefixExpression(operator: string, right: ?object.Obj): object.Obj {
+function evalPrefixExpression(operator: string, right: ?object.Obj): object.Obj {
   switch (operator) {
     case '!':
       return evalBangOperatorExpression(right);
     case '-':
       return evalMinusPrefixOperatorExpression(right);
     default:
-      return NULL;
+      return new object.Error(`unknown operator: ${operator}${right.Type()}`);
   }
 }
 
@@ -100,7 +110,7 @@ function evalIntegerInfixExpression(
     case '!=':
       return nativeBoolToBooleanObject(leftVal !== rightVal);
     default:
-      return NULL;
+      return new object.Error(`unknown operator: ${left.Type()} ${operator} ${right.Type()}`);
   }
 }
 
@@ -117,7 +127,11 @@ function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object
   if (operator === '==') return nativeBoolToBooleanObject(left === right);
   if (operator === '!=') return nativeBoolToBooleanObject(left !== right);
 
-  return NULL;
+  if (left.Type() !== right.Type()) {
+    return new object.Error(`type mismatch: ${left.Type()} ${operator} ${right.Type()}`);
+  }
+
+  return new object.Error(`unknown operator: ${left.Type()} ${operator} ${right.Type()}`);
 }
 
 function isTruthy(obj: ?object.Obj): boolean {
@@ -135,6 +149,9 @@ function isTruthy(obj: ?object.Obj): boolean {
 
 function evalIfExpression(ie: ast.IfExpression): ?object.Obj {
   const condition: ?object.Obj = Eval(ie.Condition);
+  if (isError(condition)) {
+    return condition;
+  }
 
   if (isTruthy(condition)) {
     return Eval(ie.Consequence);
@@ -143,6 +160,13 @@ function evalIfExpression(ie: ast.IfExpression): ?object.Obj {
   }
 
   return NULL;
+}
+
+function isError(obj: object.Obj): boolean {
+  if (obj) {
+    return obj.Type() === object.ERROR_OBJ;
+  }
+  return false;
 }
 
 export default function Eval(node: ast.Node): ?object.Obj {
@@ -156,6 +180,7 @@ export default function Eval(node: ast.Node): ?object.Obj {
     case ast.Program:
       castedNode = ((node: any): ast.Program);
       return evalProgram(castedNode);
+
     case ast.ExpressionStatement:
       castedNode = ((node: any): ast.ExpressionStatement);
       return Eval(castedNode.Expression);
@@ -164,27 +189,46 @@ export default function Eval(node: ast.Node): ?object.Obj {
     case ast.IntegerLiteral:
       castedNode = ((node: any): ast.IntegerLiteral);
       return new object.Integer(castedNode.Value);
+
     case ast.Boolean:
       castedNode = ((node: any): ast.Boolean);
       return nativeBoolToBooleanObject(castedNode.Value);
+
     case ast.PrefixExpression:
       castedNode = ((node: any): ast.PrefixExpression);
       right = Eval(castedNode.Right);
-      return evaluPrefixExpression(castedNode.Operator, right);
+      if (isError(right)) {
+        return right;
+      }
+      return evalPrefixExpression(castedNode.Operator, right);
+
     case ast.InfixExpression:
       castedNode = ((node: any): ast.InfixExpression);
       left = Eval(castedNode.Left);
       right = Eval(castedNode.Right);
+      if (isError(left)) {
+        return left;
+      }
+      if (isError(right)) {
+        return right;
+      }
       return evalInfixExpression(castedNode.Operator, left, right);
+
     case ast.BlockStatement:
       castedNode = ((node: any): ast.BlockStatement);
       return evalBlockStatement(castedNode);
+
     case ast.IfExpression:
       castedNode = ((node: any): ast.IfExpression);
       return evalIfExpression(castedNode);
+
     case ast.ReturnStatement:
       val = Eval(((node: any): ast.ReturnStatement).ReturnValue);
-      return new object.ReturnValue(val || NULL);
+      if (isError(val)) {
+        return val;
+      }
+      return new object.ReturnValue(val);
+
     default:
       return null;
   }

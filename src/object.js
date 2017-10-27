@@ -6,6 +6,7 @@ export const INTEGER_OBJ = 'INTEGER';
 export const BOOLEAN_OBJ = 'BOOLEAN';
 export const NULL_OBJ = 'NULL';
 export const RETURN_VALUE_OBJ = 'RETURN_VALUE';
+export const ERROR_OBJ = 'ERROR';
 
 export interface Obj {
   Type(): ObjType;
@@ -67,5 +68,21 @@ export class ReturnValue implements Obj {
 
   Inspect(): string {
     return this.Value.Inspect();
+  }
+}
+
+export class Error implements Obj {
+  Message: string;
+
+  constructor(message: string): void {
+    this.Message = message;
+  }
+
+  Type(): ObjType {
+    return ERROR_OBJ;
+  }
+
+  Inspect(): string {
+    return `ERROR: ${this.Message}`;
   }
 }
