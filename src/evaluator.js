@@ -1,17 +1,18 @@
 // @flow
 import * as ast from './ast';
 import * as object from './object';
+import Environment from './environment';
 
 // define as const
 export const NULL = new object.Null();
 export const TRUE = new object.Boolean(true);
 export const FALSE = new object.Boolean(false);
 
-function evalProgram(program: ast.Program): ?object.Obj {
+function evalProgram(program: ast.Program, env: Environment): ?object.Obj {
   let result: ?object.Obj;
 
   program.Statements.some((stmt) => {
-    result = Eval(stmt);
+    result = Eval(stmt, env);
 
     if (result) {
       switch (result.constructor) {
@@ -29,11 +30,11 @@ function evalProgram(program: ast.Program): ?object.Obj {
   return result;
 }
 
-function evalBlockStatement(block: ast.BlockStatement): ?object.Obj {
+function evalBlockStatement(block: ast.BlockStatement, env: Environment): ?object.Obj {
   let result: ?object.Obj;
 
   block.Statements.some((stmt) => {
-    result = Eval(stmt);
+    result = Eval(stmt, env);
 
     if (
       result &&
@@ -147,19 +148,28 @@ function isTruthy(obj: ?object.Obj): boolean {
   }
 }
 
-function evalIfExpression(ie: ast.IfExpression): ?object.Obj {
-  const condition: ?object.Obj = Eval(ie.Condition);
+function evalIfExpression(ie: ast.IfExpression, env: Environment): ?object.Obj {
+  const condition: ?object.Obj = Eval(ie.Condition, env);
   if (isError(condition)) {
     return condition;
   }
 
   if (isTruthy(condition)) {
-    return Eval(ie.Consequence);
+    return Eval(ie.Consequence, env);
   } else if (ie.Alternative) {
-    return Eval(ie.Alternative);
+    return Eval(ie.Alternative, env);
   }
 
   return NULL;
+}
+
+function evalIdentifier(node: ast.Identifier, env: Environment): ?object.Obj {
+  const val: ?object.Obj = env.Get(node.Value);
+  if (!val) {
+    return new object.Error(`identifier not found: ${node.Value}`);
+  }
+
+  return val;
 }
 
 function isError(obj: object.Obj): boolean {
@@ -169,7 +179,7 @@ function isError(obj: object.Obj): boolean {
   return false;
 }
 
-export default function Eval(node: ast.Node): ?object.Obj {
+export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let right;
   let left;
   let castedNode;
@@ -179,11 +189,11 @@ export default function Eval(node: ast.Node): ?object.Obj {
     // Evaluate Statements
     case ast.Program:
       castedNode = ((node: any): ast.Program);
-      return evalProgram(castedNode);
+      return evalProgram(castedNode, env);
 
     case ast.ExpressionStatement:
       castedNode = ((node: any): ast.ExpressionStatement);
-      return Eval(castedNode.Expression);
+      return Eval(castedNode.Expression, env);
 
     // Evaluate Expressions
     case ast.IntegerLiteral:
@@ -196,7 +206,7 @@ export default function Eval(node: ast.Node): ?object.Obj {
 
     case ast.PrefixExpression:
       castedNode = ((node: any): ast.PrefixExpression);
-      right = Eval(castedNode.Right);
+      right = Eval(castedNode.Right, env);
       if (isError(right)) {
         return right;
       }
@@ -204,8 +214,8 @@ export default function Eval(node: ast.Node): ?object.Obj {
 
     case ast.InfixExpression:
       castedNode = ((node: any): ast.InfixExpression);
-      left = Eval(castedNode.Left);
-      right = Eval(castedNode.Right);
+      left = Eval(castedNode.Left, env);
+      right = Eval(castedNode.Right, env);
       if (isError(left)) {
         return left;
       }
@@ -216,19 +226,28 @@ export default function Eval(node: ast.Node): ?object.Obj {
 
     case ast.BlockStatement:
       castedNode = ((node: any): ast.BlockStatement);
-      return evalBlockStatement(castedNode);
+      return evalBlockStatement(castedNode, env);
 
     case ast.IfExpression:
       castedNode = ((node: any): ast.IfExpression);
-      return evalIfExpression(castedNode);
+      return evalIfExpression(castedNode, env);
 
     case ast.ReturnStatement:
-      val = Eval(((node: any): ast.ReturnStatement).ReturnValue);
+      val = Eval(((node: any): ast.ReturnStatement).ReturnValue, env);
       if (isError(val)) {
         return val;
       }
       return new object.ReturnValue(val);
 
+    case ast.LetStatement:
+      val = Eval(((node: any): ast.LetStatement).Value, env);
+      if (isError(val)) {
+        return val;
+      }
+      env.Set(node.Name.Value, val);
+      return null;
+    case ast.Identifier:
+      return evalIdentifier(node, env);
     default:
       return null;
   }

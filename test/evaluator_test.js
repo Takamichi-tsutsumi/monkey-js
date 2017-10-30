@@ -4,14 +4,16 @@ import Lexer from '../src/lexer';
 import Parser from '../src/parser';
 import * as ast from '../src/ast';
 import * as object from '../src/object';
+import Environment from '../src/environment';
 import Eval, { NULL } from '../src/evaluator';
 
 const testEval = (input: string): ?object.Obj => {
   const l: Lexer = new Lexer(input);
   const p: Parser = new Parser(l);
   const program: ast.Program = p.ParseProgram();
+  const env: Environment = new Environment();
 
-  return Eval(program);
+  return Eval(program, env);
 };
 
 const testIntegerObject = (t, obj: ?object.Obj, expected: number): void => {
@@ -189,6 +191,10 @@ test('error handling', (t) => {
       input: 'if (10 > 1) { if (10 > 1) { return true + false; } return 1; }',
       expected: 'unknown operator: BOOLEAN + BOOLEAN',
     },
+    {
+      input: 'foobar',
+      expected: 'identifier not found: foobar',
+    },
   ];
 
   tests.forEach((tt, idx) => {
@@ -198,4 +204,20 @@ test('error handling', (t) => {
   });
 
   t.pass();
+});
+
+test('let statements', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: number,
+  }> = [
+    { input: 'let a = 5; a;', expected: 5 },
+    { input: 'let a = 5 * 5; a;', expected: 25 },
+    { input: 'let a = 5; let b = a; b;', expected: 5 },
+    { input: 'let a = 5; let b = a; let c = a + b + 5; c;', expected: 15 },
+  ];
+
+  tests.forEach((tt) => {
+    testIntegerObject(t, testEval(tt.input), tt.expected);
+  });
 });
