@@ -11,16 +11,16 @@ const testEval = (input: string): ?object.Obj => {
   const l: Lexer = new Lexer(input);
   const p: Parser = new Parser(l);
   const program: ast.Program = p.ParseProgram();
-  const env: Environment = new Environment();
+  const env: Environment = new Environment(new Map());
 
   return Eval(program, env);
 };
 
-const testIntegerObject = (t, obj: ?object.Obj, expected: number): void => {
+const testIntegerObject = (t, obj: ?object.Obj, expected: number, message: ?string): void => {
   const result = ((obj: any): object.Integer);
 
-  t.is(typeof result.Value, 'number');
-  t.is(result.Value, expected);
+  t.is(typeof result.Value, 'number', `typeof Value not number${message || 'Error'}`);
+  t.is(result.Value, expected, `value not expected ${message || 'Error'}`);
 };
 
 const testNullObject = (t, obj: ?object.Obj): void => {
@@ -220,4 +220,55 @@ test('let statements', (t) => {
   tests.forEach((tt) => {
     testIntegerObject(t, testEval(tt.input), tt.expected);
   });
+});
+
+test('function object', (t) => {
+  const input: string = 'fn(x) { x + 2; };';
+
+  const evaluated: object.Obj = testEval(input);
+  const fn: object.Func = ((evaluated: any): object.Func);
+
+  if (fn.constructor !== object.Func) {
+    t.fail(`object is not Function. got=${fn.constructor}`);
+  }
+  if (fn.Parameters.length !== 1) {
+    t.fail(`function has wrong parameters. Parameters=${fn.Parameters.toString()}`);
+  }
+  if (fn.Parameters[0].toString() !== 'x') {
+    t.fail(`parameter is not 'x'. got=${fn.Parameters[0]}`);
+  }
+
+  const expectedBody: string = '(x + 2)';
+
+  t.is(fn.Body.toString(), expectedBody);
+});
+
+test('function application', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: number,
+  }> = [
+    { input: 'let identity = fn(x) { x; }; identity(5);', expected: 5 },
+    { input: 'let identity = fn(x) { return x; }; identity(5);', expected: 5 },
+    { input: 'let double = fn(x) { x * 2; }; double(5);', expected: 10 },
+    { input: 'let add = fn(x, y) { x + y; }; add(5, 5);', expected: 10 },
+    { input: 'let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));', expected: 20 },
+    { input: 'fn(x) { x; }(5)', expected: 5 },
+  ];
+
+  tests.forEach((tt, idx) => {
+    testIntegerObject(t, testEval(tt.input), tt.expected, `fail case[${idx + 1}]`);
+  });
+});
+
+test('closures', (t) => {
+  const input: string = `
+  let newAdder = fn(x) {
+    fn(y) { x + y };
+  };
+  let addTwo = newAdder(2);
+  addTwo(2);
+  `;
+
+  testIntegerObject(t, testEval(input), 4);
 });

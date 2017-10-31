@@ -26,7 +26,7 @@ const Start = (input: stream$Readable, output: stream$Writable): void => {
     input,
     output,
   });
-  const env: Environment = new Environment();
+  const env: Environment = new Environment(new Map(), null);
 
   output.write(PROMPT);
   rl.on('line', (line) => {

@@ -179,11 +179,56 @@ function isError(obj: object.Obj): boolean {
   return false;
 }
 
+function evalExpressions(exps: Array<ast.Expression>, env: Environment): Array<object.Obj> {
+  const result: Array<object.Obj> = [];
+
+  exps.forEach((exp) => {
+    const evaluated: ?object.Obj = Eval(exp, env);
+    if (isError(evaluated)) return [exp];
+    result.push(evaluated);
+  });
+
+  return result;
+}
+
+function extendFunctionEnv(fn: object.Func, args: Array<object.Obj>): Environment {
+  const env: Environment = new Environment(new Map(), fn.Env);
+
+  fn.Parameters.forEach((p, idx) => {
+    env.Set(p.Value, args[idx]);
+  });
+
+  return env;
+}
+
+function unwrapReturnValue(obj: object.Obj): object.Obj {
+  const returnValue = ((obj: any): object.ReturnValue);
+  if (returnValue.constructor === object.ReturnValue) return returnValue.Value;
+
+  return obj;
+}
+
+function applyFunction(fn: object.Obj, args: Array<object.Obj>): object.Obj {
+  const func: object.Func = ((fn: any): object.Func);
+  if (func.constructor !== object.Func) {
+    return new object.Error(`not a function: ${func.constructor}`);
+  }
+
+  const extendedEnv: Environment = extendFunctionEnv(func, args);
+  const evaluated: object.Obj = Eval(func.Body, extendedEnv);
+
+  return unwrapReturnValue(evaluated);
+}
+
 export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let right;
   let left;
   let castedNode;
   let val;
+  let params;
+  let body;
+  let func;
+  let args;
 
   switch (node.constructor) {
     // Evaluate Statements
@@ -246,8 +291,24 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
       }
       env.Set(node.Name.Value, val);
       return null;
+
     case ast.Identifier:
       return evalIdentifier(node, env);
+
+    case ast.FunctionLiteral:
+      castedNode = ((node: any): ast.FunctionLiteral);
+      params = node.Parameters;
+      body = node.Body;
+      return new object.Func(params, body, env);
+
+    case ast.CallExpression:
+      func = Eval(node.Func, env);
+      if (isError(func)) return func;
+      args = evalExpressions(node.Arguments, env);
+      if (args.length === 1 && isError(args[0])) return args[0];
+
+      return applyFunction(func, args);
+
     default:
       return null;
   }

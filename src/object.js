@@ -1,4 +1,6 @@
 // @flow
+import * as ast from './ast';
+import Environment from './environment';
 
 export type ObjType = string;
 
@@ -7,6 +9,7 @@ export const BOOLEAN_OBJ = 'BOOLEAN';
 export const NULL_OBJ = 'NULL';
 export const RETURN_VALUE_OBJ = 'RETURN_VALUE';
 export const ERROR_OBJ = 'ERROR';
+export const FUNCTION_OBJ = 'FUNCTION';
 
 export interface Obj {
   Type(): ObjType;
@@ -84,5 +87,25 @@ export class Error implements Obj {
 
   Inspect(): string {
     return `ERROR: ${this.Message}`;
+  }
+}
+
+export class Func implements Obj {
+  Parameters: Array<ast.Identifier>;
+  Body: ast.BlockStatement;
+  Env: Environment;
+
+  constructor(params: Array<ast.Identifier>, body: ast.BlockStatement, env: Environment): void {
+    this.Parameters = params;
+    this.Body = body;
+    this.Env = env;
+  }
+
+  Type(): ObjType {
+    return FUNCTION_OBJ;
+  }
+
+  Inspect(): string {
+    return `fn(${this.Parameters.map(p => p.toString()).join(', ')}) {\n${this.Body.toString()}\n}`;
   }
 }
