@@ -6,6 +6,7 @@ import type { Token } from './token';
 import * as token from './token';
 import * as ast from './ast';
 import * as object from './object';
+import Environment from './environment';
 import Eval from './evaluator';
 
 const printToken = (out: stream$Writable, tok: Token): void => {
@@ -25,6 +26,7 @@ const Start = (input: stream$Readable, output: stream$Writable): void => {
     input,
     output,
   });
+  const env: Environment = new Environment(new Map(), null);
 
   output.write(PROMPT);
   rl.on('line', (line) => {
@@ -38,7 +40,7 @@ const Start = (input: stream$Readable, output: stream$Writable): void => {
       return;
     }
 
-    const evaluated: object.Obj = Eval(program);
+    const evaluated: object.Obj = Eval(program, env);
     if (evaluated) {
       output.write(evaluated.Inspect());
     }
