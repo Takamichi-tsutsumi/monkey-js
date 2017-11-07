@@ -309,6 +309,9 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
 
       return applyFunction(func, args);
 
+    case ast.StringLiteral:
+      return new object.String(node.Value);
+
     default:
       return null;
   }

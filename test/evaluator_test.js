@@ -272,3 +272,13 @@ test('closures', (t) => {
 
   testIntegerObject(t, testEval(input), 4);
 });
+
+test('string literal', (t) => {
+  const input: string = '"Hello World!"';
+
+  const evaluated: object.Obj = testEval(input);
+  const str: object.String = ((evaluated: any): object.String);
+
+  t.is(str.constructor, object.String);
+  t.is(str.Value, 'Hello World!');
+});

@@ -128,7 +128,7 @@ export class StringLiteral implements Expression {
   Token: token.Token;
   Value: string;
 
-  constructor(tok: token.Token, val: Value): void {
+  constructor(tok: token.Token, val: string): void {
     this.Token = tok;
     this.Value = val;
   }
