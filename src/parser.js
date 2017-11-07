@@ -47,6 +47,8 @@ export default class Parser {
     // register parse function for prefix
     this.registerPrefix(token.IDENT, this.parseIdentifier.bind(this));
     this.registerPrefix(token.INT, this.parseIntegerLiteral.bind(this));
+    this.registerPrefix(token.STRING, this.parseStringLiteral.bind(this));
+
     this.registerPrefix(token.BANG, this.parsePrefixExpression.bind(this));
     this.registerPrefix(token.MINUS, this.parsePrefixExpression.bind(this));
 
@@ -172,7 +174,7 @@ export default class Parser {
   }
 
   peekError(t: token.TokenType): void {
-    const msg = `expected next token to be ${t}, got ${this.peekToken.Type} instead`;
+    const msg: string = `expected next token to be ${t}, got ${this.peekToken.Type} instead`;
     this.errors.push(msg);
   }
 
@@ -229,6 +231,10 @@ export default class Parser {
     lit.Value = value;
 
     return lit;
+  }
+
+  parseStringLiteral(): ast.Expression {
+    return new ast.StringLiteral(this.curToken, this.curToken.Literal);
   }
 
   noPrefixParseFnError(t: token.TokenType): void {
