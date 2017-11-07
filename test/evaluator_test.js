@@ -195,6 +195,10 @@ test('error handling', (t) => {
       input: 'foobar',
       expected: 'identifier not found: foobar',
     },
+    {
+      input: '"Hello" - "World"',
+      expected: 'unknown operator: STRING - STRING',
+    },
   ];
 
   tests.forEach((tt, idx) => {
@@ -275,6 +279,16 @@ test('closures', (t) => {
 
 test('string literal', (t) => {
   const input: string = '"Hello World!"';
+
+  const evaluated: object.Obj = testEval(input);
+  const str: object.String = ((evaluated: any): object.String);
+
+  t.is(str.constructor, object.String);
+  t.is(str.Value, 'Hello World!');
+});
+
+test('string concatenation', (t) => {
+  const input: string = '"Hello" + " " + "World!"';
 
   const evaluated: object.Obj = testEval(input);
   const str: object.String = ((evaluated: any): object.String);

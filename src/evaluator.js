@@ -115,6 +115,21 @@ function evalIntegerInfixExpression(
   }
 }
 
+function evalStringInfixExpression(
+  operator: string,
+  left: object.String,
+  right: object.String,
+): object.Obj {
+  if (operator !== '+') {
+    return new object.Error(`unknown operator: ${left.Type()} ${operator} ${right.Type()}`);
+  }
+
+  const leftVal: string = left.Value;
+  const rightVal: string = right.Value;
+
+  return new object.String(`${leftVal}${rightVal}`);
+}
+
 function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object.Obj): object.Obj {
   if (!left || !right) return NULL;
 
@@ -127,6 +142,14 @@ function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object
   }
   if (operator === '==') return nativeBoolToBooleanObject(left === right);
   if (operator === '!=') return nativeBoolToBooleanObject(left !== right);
+
+  if (left.Type() === object.STRING_OBJ && right.Type() === object.STRING_OBJ) {
+    return evalStringInfixExpression(
+      operator,
+      ((left: any): object.String),
+      ((right: any): object.String),
+    );
+  }
 
   if (left.Type() !== right.Type()) {
     return new object.Error(`type mismatch: ${left.Type()} ${operator} ${right.Type()}`);
