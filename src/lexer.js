@@ -52,6 +52,19 @@ export default class Lexer {
     throw new Error('Not a two character token.');
   }
 
+  readString(): string {
+    const position: number = this.position + 1;
+    while (true) {
+      this.readChar();
+
+      if (this.char === '"' || !this.char) {
+        break;
+      }
+    }
+
+    return this.input.substring(position, this.position);
+  }
+
   skipWhitespace(): void {
     while (this.char === ' ' || this.char === '\t' || this.char === '\n' || this.char === '\r') {
       this.readChar();
@@ -118,6 +131,9 @@ export default class Lexer {
         break;
       case '>':
         tok = token.newToken(token.GT, this.char);
+        break;
+      case '"':
+        tok = token.newToken(token.STRING, this.readString());
         break;
       case null:
         tok = token.newToken(token.EOF, '');

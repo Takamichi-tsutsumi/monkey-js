@@ -4,7 +4,7 @@ import * as token from '../src/token';
 import type { TokenType } from '../src/token';
 import Lexer from '../src/lexer';
 
-test('test next token', t => {
+test('test next token', (t) => {
   const input: string = '=+(){},;';
   const tests: Array<{
     expectedType: TokenType,
@@ -33,7 +33,7 @@ test('test next token', t => {
   t.pass();
 });
 
-test('test next token more like source code', t => {
+test('test next token more like source code', (t) => {
   const input: string = `let five = 5;
   let ten = 10;
 
@@ -99,7 +99,7 @@ test('test next token more like source code', t => {
   t.pass();
 });
 
-test('test next token with more operators', t => {
+test('test next token with more operators', (t) => {
   const input: string = `
   !-/*5;
   5 < 10 > 5;
@@ -135,7 +135,7 @@ test('test next token with more operators', t => {
   t.pass();
 });
 
-test('test next token with more keywords', t => {
+test('test next token with more keywords', (t) => {
   const input: string = `
   if (5 < 10) {
     return true;
@@ -179,7 +179,7 @@ test('test next token with more keywords', t => {
   t.pass();
 });
 
-test('test next token with two character operators', t => {
+test('test next token with two character operators', (t) => {
   const input: string = `
   10 == 10;
   10 != 9;
@@ -196,6 +196,32 @@ test('test next token with two character operators', t => {
     { expectedType: token.NOT_EQ, expectedLiteral: '!=' },
     { expectedType: token.INT, expectedLiteral: '9' },
     { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.EOF, expectedLiteral: '' },
+  ];
+
+  const l = new Lexer(input);
+
+  tests.forEach((tt, i) => {
+    const tok = l.nextToken();
+
+    t.is(tt.expectedType, tok.Type, `tests[${i}] - tokentype wrong.`);
+    t.is(tt.expectedLiteral, tok.Literal, `tests[${i}] - literal wrong.`);
+  });
+
+  t.pass();
+});
+
+test('test next token strings', (t) => {
+  const input: string = `
+  "foobar"
+  "foo bar"
+  `;
+  const tests: Array<{
+    expectedType: TokenType,
+    expectedLiteral: string,
+  }> = [
+    { expectedType: token.STRING, expectedLiteral: 'foobar' },
+    { expectedType: token.STRING, expectedLiteral: 'foo bar' },
     { expectedType: token.EOF, expectedLiteral: '' },
   ];
 

@@ -13,6 +13,8 @@ export const EOF: string = 'EOF';
 export const IDENT: string = 'IDENT';
 export const INT: string = 'INT';
 
+export const STRING: string = 'STRING';
+
 // Operators
 export const ASSIGN: string = 'ASSIGN';
 export const PLUS: string = 'PLUS';
