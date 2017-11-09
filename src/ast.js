@@ -293,3 +293,22 @@ export class CallExpression {
     return `${this.Func.toString()}(${this.Arguments.map(arg => arg.toString()).join(',')})`;
   }
 }
+
+export class ArrayLiteral {
+  Token: token.Token;
+  Elements: ?Array<Expression>;
+
+  constructor(tok: token.Token) {
+    this.Token = tok;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `[${this.Elements.map(arg => arg.toString()).join(',')}]`;
+  }
+}

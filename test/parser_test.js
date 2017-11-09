@@ -481,3 +481,43 @@ test('string literal expression', (t) => {
 
   t.is(literal.Value, 'hello world');
 });
+
+test('array literals', (t) => {
+  const input: string = '[1, 2 * 2, 3 + 3];';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const array: ast.ArrayLiteral = ((stmt.Expression: any): ast.ArrayLiteral);
+
+  t.is(array.constructor, ast.ArrayLiteral);
+  t.is(array.Elements.length, 3);
+
+  testIntegerLiteral(t, array.Elements[0], 1);
+  testInfixExpression(t, array.Elements[1], 2, '*', 2);
+  testInfixExpression(t, array.Elements[2], 3, '+', 3);
+});
+
+test('empty array', (t) => {
+  const input: string = '[];';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const array: ast.ArrayLiteral = ((stmt.Expression: any): ast.ArrayLiteral);
+
+  t.is(array.constructor, ast.ArrayLiteral);
+  t.is(array.Elements.length, 0);
+});

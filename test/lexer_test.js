@@ -236,3 +236,30 @@ test('test next token strings', (t) => {
 
   t.pass();
 });
+
+test('array', (t) => {
+  const input: string = '[1, 2];';
+  const tests: Array<{
+    expectedType: TokenType,
+    expectedLiteral: string,
+  }> = [
+    { expectedType: token.LBRACKET, expectedLiteral: '[' },
+    { expectedType: token.INT, expectedLiteral: '1' },
+    { expectedType: token.COMMA, expectedLiteral: ',' },
+    { expectedType: token.INT, expectedLiteral: '2' },
+    { expectedType: token.RBRACKET, expectedLiteral: ']' },
+    { expectedType: token.SEMICOLON, expectedLiteral: ';' },
+    { expectedType: token.EOF, expectedLiteral: '' },
+  ];
+
+  const l = new Lexer(input);
+
+  tests.forEach((tt, i) => {
+    const tok = l.nextToken();
+
+    t.is(tt.expectedType, tok.Type, `tests[${i}] - tokentype wrong.`);
+    t.is(tt.expectedLiteral, tok.Literal, `tests[${i}] - literal wrong.`);
+  });
+
+  t.pass();
+});
