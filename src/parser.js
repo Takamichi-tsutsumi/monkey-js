@@ -14,6 +14,7 @@ const SUM: number = 4;
 const PRODUCT: number = 5;
 const PREFIX: number = 6;
 const CALL: number = 7;
+const INDEX: number = 8;
 
 const precedences = {
   [token.EQ]: EQUALS,
@@ -25,6 +26,7 @@ const precedences = {
   [token.SLASH]: PRODUCT,
   [token.ASTERISK]: PRODUCT,
   [token.LPAREN]: CALL,
+  [token.LBRACKET]: INDEX,
 };
 
 export default class Parser {
@@ -80,6 +82,9 @@ export default class Parser {
 
     // register parse call expression
     this.registerInfix(token.LPAREN, this.parseCallExpression.bind(this));
+
+    // register parse index expression
+    this.registerInfix(token.LBRACKET, this.parseIndexExpression.bind(this));
 
     this.nextToken();
     this.nextToken();
@@ -421,11 +426,21 @@ export default class Parser {
     return list;
   }
 
-  parseArrayLiteral(): ast.Expression {
+  parseArrayLiteral(): ?ast.Expression {
     const array: ast.ArrayLiteral = new ast.ArrayLiteral(this.curToken);
 
     array.Elements = this.parseExpressionList(token.RBRACKET);
 
     return array;
+  }
+
+  parseIndexExpression(left: ast.Expression): ?ast.Expression {
+    this.nextToken();
+    const index: ast.Expression = this.parseExpression(LOWEST);
+    if (!this.expectPeek(token.RBRACKET)) {
+      return null;
+    }
+
+    return new ast.IndexExpression(this.curToken, left, index);
   }
 }

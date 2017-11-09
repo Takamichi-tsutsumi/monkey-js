@@ -290,7 +290,7 @@ export class CallExpression {
   }
 
   toString(): string {
-    return `${this.Func.toString()}(${this.Arguments.map(arg => arg.toString()).join(',')})`;
+    return `${this.Func.toString()}(${this.Arguments.map(arg => arg.toString()).join(', ')})`;
   }
 }
 
@@ -309,6 +309,28 @@ export class ArrayLiteral {
   }
 
   toString(): string {
-    return `[${this.Elements.map(arg => arg.toString()).join(',')}]`;
+    return `[${this.Elements.map(arg => arg.toString()).join(', ')}]`;
+  }
+}
+
+export class IndexExpression {
+  Token: token.Token; // [
+  Left: Expression; // array
+  Index: Expression; // expression of index number
+
+  constructor(tok: token.Token, left: Expression, index: Expression): void {
+    this.Token = tok;
+    this.Left = left;
+    this.Index = index;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `(${this.Left.toString(0)}[${this.Index.toString(0)}])`;
   }
 }

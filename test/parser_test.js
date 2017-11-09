@@ -297,6 +297,11 @@ test('test operator precedence parsing', (t) => {
     { input: '2 / (5 + 5)', expected: '(2 / (5 + 5))' },
     { input: '-(5 + 5)', expected: '(-(5 + 5))' },
     { input: '!(true == true)', expected: '(!(true == true))' },
+    { input: 'a * [1, 2, 3, 4][b * c] * d', expected: '((a * ([1, 2, 3, 4][(b * c)])) * d)' },
+    {
+      input: 'add(a * b[2], b[1], 2 * [1, 2][1])',
+      expected: 'add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))',
+    },
   ];
 
   tests.forEach((tt) => {
@@ -520,4 +525,21 @@ test('empty array', (t) => {
 
   t.is(array.constructor, ast.ArrayLiteral);
   t.is(array.Elements.length, 0);
+});
+
+test('parse index expression', (t) => {
+  const input: string = 'myArray[1 + 1];';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const indexExp: ast.IndexExpression = ((stmt.Expression: any): ast.IndexExpression);
+
+  t.is(indexExp.constructor, ast.IndexExpression);
+  testIdentifier(t, indexExp.Left, 'myArray');
+  testInfixExpression(t, indexExp.Index, 1, '+', 1);
 });
