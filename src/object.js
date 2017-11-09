@@ -11,6 +11,7 @@ export const RETURN_VALUE_OBJ = 'RETURN_VALUE';
 export const ERROR_OBJ = 'ERROR';
 export const FUNCTION_OBJ = 'FUNCTION';
 export const STRING_OBJ = 'STRING';
+export const BUILTIN_OBJ = 'BUILTIN';
 
 export interface Obj {
   Type(): ObjType;
@@ -124,5 +125,22 @@ export class String implements Obj {
 
   Inspect(): string {
     return `${this.Value}`;
+  }
+}
+
+type BuiltinFunction = (...args: Array<object.Obj>) => object.Obj;
+
+export class Builtin implements Obj {
+  Fn: BuiltinFunction;
+  constructor(fn: BuiltinFunction): void {
+    this.Fn = fn;
+  }
+
+  Type(): ObjType {
+    return BUILTIN_OBJ;
+  }
+
+  Inspect(): string {
+    return 'builtin function';
   }
 }

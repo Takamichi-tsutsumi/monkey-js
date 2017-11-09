@@ -2,6 +2,7 @@
 import * as ast from './ast';
 import * as object from './object';
 import Environment from './environment';
+import builtins from './builtins';
 
 // define as const
 export const NULL = new object.Null();
@@ -188,11 +189,15 @@ function evalIfExpression(ie: ast.IfExpression, env: Environment): ?object.Obj {
 
 function evalIdentifier(node: ast.Identifier, env: Environment): ?object.Obj {
   const val: ?object.Obj = env.Get(node.Value);
-  if (!val) {
-    return new object.Error(`identifier not found: ${node.Value}`);
+  if (val) {
+    return val;
   }
 
-  return val;
+  const builtin: ?object.Obj = builtins[node.Value];
+  if (builtin) {
+    return builtin;
+  }
+  return new object.Error(`identifier not found: ${node.Value}`);
 }
 
 function isError(obj: object.Obj): boolean {
@@ -233,14 +238,19 @@ function unwrapReturnValue(obj: object.Obj): object.Obj {
 
 function applyFunction(fn: object.Obj, args: Array<object.Obj>): object.Obj {
   const func: object.Func = ((fn: any): object.Func);
-  if (func.constructor !== object.Func) {
-    return new object.Error(`not a function: ${func.constructor}`);
+  let extendedEnv;
+  let evaluated;
+  switch (func.constructor) {
+    case object.Func:
+      extendedEnv = extendFunctionEnv(func, args);
+      evaluated = Eval(func.Body, extendedEnv);
+
+      return unwrapReturnValue(evaluated);
+    case object.Builtin:
+      return func.Fn(...args);
+    default:
+      return new object.Error(`not a function: ${func.constructor}`);
   }
-
-  const extendedEnv: Environment = extendFunctionEnv(func, args);
-  const evaluated: object.Obj = Eval(func.Body, extendedEnv);
-
-  return unwrapReturnValue(evaluated);
 }
 
 export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
