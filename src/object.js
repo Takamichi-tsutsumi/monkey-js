@@ -12,6 +12,7 @@ export const ERROR_OBJ = 'ERROR';
 export const FUNCTION_OBJ = 'FUNCTION';
 export const STRING_OBJ = 'STRING';
 export const BUILTIN_OBJ = 'BUILTIN';
+export const ARRAY_OBJ = 'ARRAY';
 
 export interface Obj {
   Type(): ObjType;
@@ -142,5 +143,21 @@ export class Builtin implements Obj {
 
   Inspect(): string {
     return 'builtin function';
+  }
+}
+
+export class Array implements Obj {
+  Elements: Array<Obj>;
+
+  constructor(elements: Array<Obj>) {
+    this.Elements = elements;
+  }
+
+  Type(): ObjType {
+    return ARRAY_OBJ;
+  }
+
+  Inspect(): string {
+    return `[${this.Elements.map(elem => elem.Inspect()).join(', ')}]`;
   }
 }

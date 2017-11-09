@@ -262,6 +262,7 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let body;
   let func;
   let args;
+  let elements;
 
   switch (node.constructor) {
     // Evaluate Statements
@@ -344,6 +345,14 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
 
     case ast.StringLiteral:
       return new object.String(node.Value);
+
+    case ast.ArrayLiteral:
+      elements = evalExpressions(node.Elements, env);
+      if (elements.length === 1 && isError(elements[0])) {
+        return elements[0];
+      }
+
+      return new object.Array(elements);
 
     default:
       return null;

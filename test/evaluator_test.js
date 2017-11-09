@@ -327,3 +327,17 @@ test('builtin functions', (t) => {
     }
   });
 });
+
+test('array literals', (t) => {
+  const input: string = '[1, 2 * 2, 3 + 3]';
+
+  const evaluated: object.Obj = testEval(input);
+  const array: object.Array = ((evaluated: any): object.Array);
+
+  t.is(array.constructor, object.Array);
+  t.is(array.Elements.length, 3);
+
+  testIntegerObject(t, array.Elements[0], 1);
+  testIntegerObject(t, array.Elements[1], 4);
+  testIntegerObject(t, array.Elements[2], 6);
+});
