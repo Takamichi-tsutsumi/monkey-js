@@ -341,3 +341,32 @@ test('array literals', (t) => {
   testIntegerObject(t, array.Elements[1], 4);
   testIntegerObject(t, array.Elements[2], 6);
 });
+
+test('array index expressions', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: any,
+  }> = [
+    { input: '[1, 2, 3][0];', expected: 1 },
+    { input: '[1, 2, 3][1];', expected: 2 },
+    { input: '[1, 2, 3][2];', expected: 3 },
+    { input: 'let i = 0; [1][i];', expected: 1 },
+    { input: '[1, 2, 3][1 + 1];', expected: 3 },
+    { input: 'let arr = [1, 2, 3]; arr[2];', expected: 3 },
+    { input: 'let arr = [1, 2, 3]; arr[0] + arr[1] + arr[2];', expected: 6 },
+    { input: 'let arr = [1, 2, 3]; let i = arr[0]; arr[i]', expected: 2 },
+    { input: 'let arr = [1, 2, 3]; arr[3]', expected: null },
+    { input: 'let arr = [1, 2, 3]; arr[-1]', expected: null },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: object.Obj = testEval(tt.input);
+    const integer = ((tt.expected: any): number);
+
+    if (integer) {
+      testIntegerObject(t, evaluated, integer);
+    } else {
+      testNullObject(t, evaluated);
+    }
+  });
+});

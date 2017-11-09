@@ -253,6 +253,25 @@ function applyFunction(fn: object.Obj, args: Array<object.Obj>): object.Obj {
   }
 }
 
+function evalArrayIndexExpression(array: ast.Expression, index: object.Obj): object.Obj {
+  const arrayObject: object.Array = ((array: any): object.Array);
+  const idx: number = ((index: any): object.Integer).Value;
+  const max: number = arrayObject.Elements.length - 1;
+
+  if (idx < 0 || idx > max) {
+    return NULL;
+  }
+
+  return arrayObject.Elements[idx];
+}
+
+function evalIndexExpression(left: ast.Expression, index: object.Obj): ?object.Obj {
+  if (left.Type() === object.ARRAY_OBJ && index.Type() === object.INTEGER_OBJ) {
+    return evalArrayIndexExpression(left, index);
+  }
+  return new object.Error(`index operator not supported: ${left.Type()}`);
+}
+
 export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let right;
   let left;
@@ -263,6 +282,7 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let func;
   let args;
   let elements;
+  let index;
 
   switch (node.constructor) {
     // Evaluate Statements
@@ -353,6 +373,17 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
       }
 
       return new object.Array(elements);
+
+    case ast.IndexExpression:
+      left = Eval(node.Left, env);
+      if (isError(left)) {
+        return left;
+      }
+      index = Eval(node.Index, env);
+      if (isError(index)) {
+        return index;
+      }
+      return evalIndexExpression(left, index);
 
     default:
       return null;
