@@ -2,6 +2,7 @@
 import * as ast from './ast';
 import * as object from './object';
 import Environment from './environment';
+import builtins from './builtins';
 
 // define as const
 export const NULL = new object.Null();
@@ -115,6 +116,21 @@ function evalIntegerInfixExpression(
   }
 }
 
+function evalStringInfixExpression(
+  operator: string,
+  left: object.String,
+  right: object.String,
+): object.Obj {
+  if (operator !== '+') {
+    return new object.Error(`unknown operator: ${left.Type()} ${operator} ${right.Type()}`);
+  }
+
+  const leftVal: string = left.Value;
+  const rightVal: string = right.Value;
+
+  return new object.String(`${leftVal}${rightVal}`);
+}
+
 function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object.Obj): object.Obj {
   if (!left || !right) return NULL;
 
@@ -127,6 +143,14 @@ function evalInfixExpression(operator: string, left: ?object.Obj, right: ?object
   }
   if (operator === '==') return nativeBoolToBooleanObject(left === right);
   if (operator === '!=') return nativeBoolToBooleanObject(left !== right);
+
+  if (left.Type() === object.STRING_OBJ && right.Type() === object.STRING_OBJ) {
+    return evalStringInfixExpression(
+      operator,
+      ((left: any): object.String),
+      ((right: any): object.String),
+    );
+  }
 
   if (left.Type() !== right.Type()) {
     return new object.Error(`type mismatch: ${left.Type()} ${operator} ${right.Type()}`);
@@ -165,11 +189,15 @@ function evalIfExpression(ie: ast.IfExpression, env: Environment): ?object.Obj {
 
 function evalIdentifier(node: ast.Identifier, env: Environment): ?object.Obj {
   const val: ?object.Obj = env.Get(node.Value);
-  if (!val) {
-    return new object.Error(`identifier not found: ${node.Value}`);
+  if (val) {
+    return val;
   }
 
-  return val;
+  const builtin: ?object.Obj = builtins[node.Value];
+  if (builtin) {
+    return builtin;
+  }
+  return new object.Error(`identifier not found: ${node.Value}`);
 }
 
 function isError(obj: object.Obj): boolean {
@@ -210,14 +238,19 @@ function unwrapReturnValue(obj: object.Obj): object.Obj {
 
 function applyFunction(fn: object.Obj, args: Array<object.Obj>): object.Obj {
   const func: object.Func = ((fn: any): object.Func);
-  if (func.constructor !== object.Func) {
-    return new object.Error(`not a function: ${func.constructor}`);
+  let extendedEnv;
+  let evaluated;
+  switch (func.constructor) {
+    case object.Func:
+      extendedEnv = extendFunctionEnv(func, args);
+      evaluated = Eval(func.Body, extendedEnv);
+
+      return unwrapReturnValue(evaluated);
+    case object.Builtin:
+      return func.Fn(...args);
+    default:
+      return new object.Error(`not a function: ${func.constructor}`);
   }
-
-  const extendedEnv: Environment = extendFunctionEnv(func, args);
-  const evaluated: object.Obj = Eval(func.Body, extendedEnv);
-
-  return unwrapReturnValue(evaluated);
 }
 
 export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
@@ -308,6 +341,9 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
       if (args.length === 1 && isError(args[0])) return args[0];
 
       return applyFunction(func, args);
+
+    case ast.StringLiteral:
+      return new object.String(node.Value);
 
     default:
       return null;

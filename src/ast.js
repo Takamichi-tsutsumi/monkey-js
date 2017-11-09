@@ -124,6 +124,26 @@ export class IntegerLiteral implements Expression {
   }
 }
 
+export class StringLiteral implements Expression {
+  Token: token.Token;
+  Value: string;
+
+  constructor(tok: token.Token, val: string): void {
+    this.Token = tok;
+    this.Value = val;
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return this.Token.Literal;
+  }
+}
+
 export class PrefixExpression implements Expression {
   Token: token.Token;
   Operator: string;

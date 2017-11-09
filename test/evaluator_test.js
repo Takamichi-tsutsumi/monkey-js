@@ -195,6 +195,10 @@ test('error handling', (t) => {
       input: 'foobar',
       expected: 'identifier not found: foobar',
     },
+    {
+      input: '"Hello" - "World"',
+      expected: 'unknown operator: STRING - STRING',
+    },
   ];
 
   tests.forEach((tt, idx) => {
@@ -271,4 +275,55 @@ test('closures', (t) => {
   `;
 
   testIntegerObject(t, testEval(input), 4);
+});
+
+test('string literal', (t) => {
+  const input: string = '"Hello World!"';
+
+  const evaluated: object.Obj = testEval(input);
+  const str: object.String = ((evaluated: any): object.String);
+
+  t.is(str.constructor, object.String);
+  t.is(str.Value, 'Hello World!');
+});
+
+test('string concatenation', (t) => {
+  const input: string = '"Hello" + " " + "World!"';
+
+  const evaluated: object.Obj = testEval(input);
+  const str: object.String = ((evaluated: any): object.String);
+
+  t.is(str.constructor, object.String);
+  t.is(str.Value, 'Hello World!');
+});
+
+test('builtin functions', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: number | string,
+  }> = [
+    { input: 'len("")', expected: 0 },
+    { input: 'len("four")', expected: 4 },
+    { input: 'len("hello world")', expected: 11 },
+    { input: 'len(1)', expected: 'argument to `len` not supported, got INTEGER' },
+    { input: 'len("one", "two")', expected: 'wrong number of arguments. got=2, want=1' },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: object.Obj = testEval(tt.input);
+    let errObj;
+
+    switch (typeof tt.expected) {
+      case 'number':
+        testIntegerObject(t, evaluated, tt.expected);
+        break;
+      case 'string':
+        errObj = ((evaluated: any): object.Error);
+        t.is(errObj.constructor, object.Error);
+        t.is(errObj.Message, tt.expected);
+        break;
+      default:
+        break;
+    }
+  });
 });

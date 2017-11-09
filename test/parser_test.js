@@ -464,3 +464,20 @@ test('test call expression parsing', (t) => {
   testInfixExpression(t, exp.Arguments[1], 2, '*', 3);
   testInfixExpression(t, exp.Arguments[2], 4, '+', 5);
 });
+
+test('string literal expression', (t) => {
+  const input: string = '"hello world";';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const literal: ast.StringLiteral = ((stmt.Expression: any): ast.StringLiteral);
+
+  t.is(literal.Value, 'hello world');
+});
