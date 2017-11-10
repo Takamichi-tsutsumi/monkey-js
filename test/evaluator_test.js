@@ -5,7 +5,7 @@ import Parser from '../src/parser';
 import * as ast from '../src/ast';
 import * as object from '../src/object';
 import Environment from '../src/environment';
-import Eval, { NULL } from '../src/evaluator';
+import Eval, { NULL, TRUE, FALSE } from '../src/evaluator';
 
 const testEval = (input: string): ?object.Obj => {
   const l: Lexer = new Lexer(input);
@@ -368,5 +368,39 @@ test('array index expressions', (t) => {
     } else {
       testNullObject(t, evaluated);
     }
+  });
+});
+
+test('hash literals', (t) => {
+  const input: string = `
+  let two = "two";
+  {
+    "one": 10 - 9,
+    two: 1 + 1,
+    "thr" + "ee": 6 / 2,
+    4: 4,
+    true: 5,
+    false: 6
+  }`;
+
+  const evaluated: object.Obj = testEval(input);
+  const hash: object.Hash = ((evaluated: any): object.Hash);
+
+  t.is(hash.constructor, object.Hash);
+  const expected: { [object.HashKey]: number } = {
+    [new object.String('one').HashKey()]: 1,
+    [new object.String('two').HashKey()]: 2,
+    [new object.String('three').HashKey()]: 3,
+    [new object.Integer(4).HashKey()]: 4,
+    [TRUE.HashKey()]: 5,
+    [FALSE.HashKey()]: 6,
+  };
+
+  t.is(hash.Pairs.size, Object.keys(expected).length);
+
+  Object.keys(expected).forEach((k) => {
+    const pair = hash.Pairs.get(k);
+
+    testIntegerObject(t, pair.Value, expected[k]);
   });
 });

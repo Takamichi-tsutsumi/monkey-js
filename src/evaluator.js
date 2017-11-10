@@ -272,6 +272,32 @@ function evalIndexExpression(left: ast.Expression, index: object.Obj): ?object.O
   return new object.Error(`index operator not supported: ${left.Type()}`);
 }
 
+function evalHashLiteral(node: ast.HashLiteral, env: object.Environment): ?object.Obj {
+  const pairs: Map<object.HashKey, object.HashPair> = new Map();
+
+  let k;
+  for (k of node.Pairs.keys()) {
+    const key: object.Obj = Eval(k, env);
+    if (isError(key)) {
+      return key;
+    }
+
+    if (!key.HashKey) {
+      return new object.Error(`unusable as hash key: ${key.Type()}`);
+    }
+
+    const value: object.Obj = Eval(node.Pairs.get(k), env);
+    if (isError(value)) {
+      return value;
+    }
+
+    const hashed: object.HashKey = key.HashKey();
+    pairs.set(hashed, new object.HashPair(key, value));
+  }
+
+  return new object.Hash(pairs);
+}
+
 export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let right;
   let left;
@@ -384,6 +410,9 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
         return index;
       }
       return evalIndexExpression(left, index);
+
+    case ast.HashLiteral:
+      return evalHashLiteral(node, env);
 
     default:
       return null;

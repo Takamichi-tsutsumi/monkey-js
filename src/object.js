@@ -1,4 +1,5 @@
 // @flow
+import hash from 'fnv1a';
 import * as ast from './ast';
 import Environment from './environment';
 
@@ -13,10 +14,17 @@ export const FUNCTION_OBJ = 'FUNCTION';
 export const STRING_OBJ = 'STRING';
 export const BUILTIN_OBJ = 'BUILTIN';
 export const ARRAY_OBJ = 'ARRAY';
+export const HASH_OBJ = 'HASH';
 
 export interface Obj {
   Type(): ObjType;
   Inspect(): string;
+}
+
+type HashKey = string;
+
+export interface Hashable {
+  HashKey(): HashKey;
 }
 
 export class Integer implements Obj {
@@ -33,6 +41,10 @@ export class Integer implements Obj {
   Inspect(): string {
     return `${this.Value.toString()}`;
   }
+
+  HashKey(): HashKey {
+    return `${this.Type()},${this.Value}`;
+  }
 }
 
 export class Boolean implements Obj {
@@ -48,6 +60,17 @@ export class Boolean implements Obj {
 
   Inspect(): string {
     return `${this.Value.toString()}`;
+  }
+
+  HashKey(): HashKey {
+    let value: number;
+    if (this.Value) {
+      value = 1;
+    } else {
+      value = 0;
+    }
+
+    return `${this.Type()},${value}`;
   }
 }
 
@@ -127,6 +150,12 @@ export class String implements Obj {
   Inspect(): string {
     return `${this.Value}`;
   }
+
+  HashKey(): HashKey {
+    const h: numaber = hash(this.Value);
+
+    return `${this.Type()},${h}`;
+  }
 }
 
 type BuiltinFunction = (...args: Array<object.Obj>) => object.Obj;
@@ -159,5 +188,37 @@ export class Array implements Obj {
 
   Inspect(): string {
     return `[${this.Elements.map(elem => elem.Inspect()).join(', ')}]`;
+  }
+}
+
+export class HashPair {
+  Key: Object;
+  Value: Object;
+
+  constructor(k: Object, v: Object): void {
+    this.Key = k;
+    this.Value = v;
+  }
+}
+
+export class Hash {
+  Pairs: Map<HashKey, HashPair>;
+
+  constructor(pairs: Map<HashKey, HashPair>): void {
+    this.Pairs = pairs;
+  }
+
+  Type(): ObjType {
+    return HASH_OBJ;
+  }
+
+  Inspect(): string {
+    return `{${this.Pairs
+      .keys()
+      .map((k) => {
+        const h: HashPair = this.Pairs.get(k);
+        return `${h.Key}: ${h.Value}`;
+      })
+      .join(', ')}}`;
   }
 }
