@@ -213,12 +213,17 @@ export class Hash {
   }
 
   Inspect(): string {
-    return `{${this.Pairs
-      .keys()
-      .map((k) => {
-        const h: HashPair = this.Pairs.get(k);
-        return `${h.Key}: ${h.Value}`;
-      })
-      .join(', ')}}`;
+    let str = '{';
+    const arr = [];
+    let key;
+    for (key of this.Pairs.keys()) {
+      const h: HashPair = this.Pairs.get(key);
+      arr.push(`${h.Key.Inspect()}: ${h.Value.Inspect()}`);
+    }
+
+    str += arr.join(', ');
+    str += '}';
+
+    return str;
   }
 }

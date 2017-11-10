@@ -199,6 +199,10 @@ test('error handling', (t) => {
       input: '"Hello" - "World"',
       expected: 'unknown operator: STRING - STRING',
     },
+    {
+      input: '{"name": "Monkey"}[fn(x) { x }];',
+      expected: 'unusable as hash key: FUNCTION',
+    },
   ];
 
   tests.forEach((tt, idx) => {
@@ -402,5 +406,31 @@ test('hash literals', (t) => {
     const pair = hash.Pairs.get(k);
 
     testIntegerObject(t, pair.Value, expected[k]);
+  });
+});
+
+test('hash index expressions', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: any,
+  }> = [
+    { input: '{ "foo": 5 }["foo"]', expected: 5 },
+    { input: '{ "foo": 5 }["bar"]', expected: null },
+    { input: 'let key = "foo"; { "foo": 5 }[key]', expected: 5 },
+    { input: '{}["foo"]', expected: null },
+    { input: '{ 5: 5 }[5]', expected: 5 },
+    { input: '{ true: 5 }[true]', expected: 5 },
+    { input: '{ false: 5 }[false]', expected: 5 },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: object.Obj = testEval(tt.input);
+    const integer = ((tt.expected: any): number);
+
+    if (integer) {
+      testIntegerObject(t, evaluated, integer);
+    } else {
+      testNullObject(t, evaluated);
+    }
   });
 });

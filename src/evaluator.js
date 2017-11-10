@@ -265,9 +265,26 @@ function evalArrayIndexExpression(array: ast.Expression, index: object.Obj): obj
   return arrayObject.Elements[idx];
 }
 
+function evalHashIndexExpression(hash, index: object.Obj): object.Obj {
+  const hashObject: object.Hash = ((hash: any): object.Hash);
+  if (!index.HashKey) {
+    return new object.Error(`unusable as hash key: ${index.Type()}`);
+  }
+
+  const pair: object.HashPair = hashObject.Pairs.get(index.HashKey());
+  if (!pair) {
+    return NULL;
+  }
+
+  return pair.Value;
+}
+
 function evalIndexExpression(left: ast.Expression, index: object.Obj): ?object.Obj {
   if (left.Type() === object.ARRAY_OBJ && index.Type() === object.INTEGER_OBJ) {
     return evalArrayIndexExpression(left, index);
+  }
+  if (left.Type() === object.HASH_OBJ) {
+    return evalHashIndexExpression(left, index);
   }
   return new object.Error(`index operator not supported: ${left.Type()}`);
 }
