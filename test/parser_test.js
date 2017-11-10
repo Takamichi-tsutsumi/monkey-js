@@ -297,6 +297,11 @@ test('test operator precedence parsing', (t) => {
     { input: '2 / (5 + 5)', expected: '(2 / (5 + 5))' },
     { input: '-(5 + 5)', expected: '(-(5 + 5))' },
     { input: '!(true == true)', expected: '(!(true == true))' },
+    { input: 'a * [1, 2, 3, 4][b * c] * d', expected: '((a * ([1, 2, 3, 4][(b * c)])) * d)' },
+    {
+      input: 'add(a * b[2], b[1], 2 * [1, 2][1])',
+      expected: 'add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))',
+    },
   ];
 
   tests.forEach((tt) => {
@@ -480,4 +485,142 @@ test('string literal expression', (t) => {
   const literal: ast.StringLiteral = ((stmt.Expression: any): ast.StringLiteral);
 
   t.is(literal.Value, 'hello world');
+});
+
+test('array literals', (t) => {
+  const input: string = '[1, 2 * 2, 3 + 3];';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const array: ast.ArrayLiteral = ((stmt.Expression: any): ast.ArrayLiteral);
+
+  t.is(array.constructor, ast.ArrayLiteral);
+  t.is(array.Elements.length, 3);
+
+  testIntegerLiteral(t, array.Elements[0], 1);
+  testInfixExpression(t, array.Elements[1], 2, '*', 2);
+  testInfixExpression(t, array.Elements[2], 3, '+', 3);
+});
+
+test('empty array', (t) => {
+  const input: string = '[];';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  t.is(program.Statements.length, 1);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const array: ast.ArrayLiteral = ((stmt.Expression: any): ast.ArrayLiteral);
+
+  t.is(array.constructor, ast.ArrayLiteral);
+  t.is(array.Elements.length, 0);
+});
+
+test('parse index expression', (t) => {
+  const input: string = 'myArray[1 + 1];';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const indexExp: ast.IndexExpression = ((stmt.Expression: any): ast.IndexExpression);
+
+  t.is(indexExp.constructor, ast.IndexExpression);
+  testIdentifier(t, indexExp.Left, 'myArray');
+  testInfixExpression(t, indexExp.Index, 1, '+', 1);
+});
+
+test('parsing hash literals string keys', (t) => {
+  const input: string = '{"one": 1, "two": 2, "three": 3}';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const hash: ast.HashLiteral = ((stmt.Expression: any): ast.HashLiteral);
+
+  t.is(hash.constructor, ast.HashLiteral);
+  t.is(hash.Pairs.size, 3);
+
+  const expected: { string: number } = {
+    one: 1,
+    two: 2,
+    three: 3,
+  };
+
+  let key;
+  for (key of hash.Pairs.keys()) {
+    const literal = ((key: any): ast.StringLiteral);
+    t.is(literal.constructor, ast.StringLiteral);
+    t.is(expected[literal.toString()], hash.Pairs.get(key).Value);
+  }
+});
+
+test('parsing empty hash literal', (t) => {
+  const input: string = '{}';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const hash: ast.HashLiteral = ((stmt.Expression: any): ast.HashLiteral);
+
+  t.is(hash.constructor, ast.HashLiteral);
+  t.is(hash.Pairs.size, 0);
+});
+
+test('parsing hash literals with expressions', (t) => {
+  const input: string = '{"one": 0 + 1, "two": 10 - 8, "three": 15/5}';
+
+  const l: Lexer = new Lexer(input);
+  const p: Parser = new Parser(l);
+
+  const program: ast.Program = p.ParseProgram();
+  checkParserErrors(t, p);
+
+  const stmt: ast.ExpressionStatement = ((program.Statements[0]: any): ast.ExpressionStatement);
+  const hash: ast.HashLiteral = ((stmt.Expression: any): ast.HashLiteral);
+
+  t.is(hash.constructor, ast.HashLiteral);
+  t.is(hash.Pairs.size, 3);
+
+  const tests: { string: ast.Expression => void } = {
+    one: (e: ast.Expression) => {
+      testInfixExpression(t, e, 0, '+', 1);
+    },
+    two: (e: ast.Expression) => {
+      testInfixExpression(t, e, 10, '-', 8);
+    },
+    three: (e: ast.Expression) => {
+      testInfixExpression(t, e, 15, '/', 5);
+    },
+  };
+
+  let key;
+  for (key of hash.Pairs.keys()) {
+    const literal: ast.StringLiteral = ((key: any): ast.StringLiteral);
+    t.is(literal.constructor, ast.StringLiteral);
+    const testFunc: () => ast.Expression = tests[literal.toString()];
+    testFunc(hash.Pairs.get(key));
+  }
 });

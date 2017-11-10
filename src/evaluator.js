@@ -253,6 +253,68 @@ function applyFunction(fn: object.Obj, args: Array<object.Obj>): object.Obj {
   }
 }
 
+function evalArrayIndexExpression(array: ast.Expression, index: object.Obj): object.Obj {
+  const arrayObject: object.Array = ((array: any): object.Array);
+  const idx: number = ((index: any): object.Integer).Value;
+  const max: number = arrayObject.Elements.length - 1;
+
+  if (idx < 0 || idx > max) {
+    return NULL;
+  }
+
+  return arrayObject.Elements[idx];
+}
+
+function evalHashIndexExpression(hash, index: object.Obj): object.Obj {
+  const hashObject: object.Hash = ((hash: any): object.Hash);
+  if (!index.HashKey) {
+    return new object.Error(`unusable as hash key: ${index.Type()}`);
+  }
+
+  const pair: object.HashPair = hashObject.Pairs.get(index.HashKey());
+  if (!pair) {
+    return NULL;
+  }
+
+  return pair.Value;
+}
+
+function evalIndexExpression(left: ast.Expression, index: object.Obj): ?object.Obj {
+  if (left.Type() === object.ARRAY_OBJ && index.Type() === object.INTEGER_OBJ) {
+    return evalArrayIndexExpression(left, index);
+  }
+  if (left.Type() === object.HASH_OBJ) {
+    return evalHashIndexExpression(left, index);
+  }
+  return new object.Error(`index operator not supported: ${left.Type()}`);
+}
+
+function evalHashLiteral(node: ast.HashLiteral, env: object.Environment): ?object.Obj {
+  const pairs: Map<object.HashKey, object.HashPair> = new Map();
+
+  let k;
+  for (k of node.Pairs.keys()) {
+    const key: object.Obj = Eval(k, env);
+    if (isError(key)) {
+      return key;
+    }
+
+    if (!key.HashKey) {
+      return new object.Error(`unusable as hash key: ${key.Type()}`);
+    }
+
+    const value: object.Obj = Eval(node.Pairs.get(k), env);
+    if (isError(value)) {
+      return value;
+    }
+
+    const hashed: object.HashKey = key.HashKey();
+    pairs.set(hashed, new object.HashPair(key, value));
+  }
+
+  return new object.Hash(pairs);
+}
+
 export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let right;
   let left;
@@ -262,6 +324,8 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
   let body;
   let func;
   let args;
+  let elements;
+  let index;
 
   switch (node.constructor) {
     // Evaluate Statements
@@ -344,6 +408,28 @@ export default function Eval(node: ast.Node, env: Environment): ?object.Obj {
 
     case ast.StringLiteral:
       return new object.String(node.Value);
+
+    case ast.ArrayLiteral:
+      elements = evalExpressions(node.Elements, env);
+      if (elements.length === 1 && isError(elements[0])) {
+        return elements[0];
+      }
+
+      return new object.Array(elements);
+
+    case ast.IndexExpression:
+      left = Eval(node.Left, env);
+      if (isError(left)) {
+        return left;
+      }
+      index = Eval(node.Index, env);
+      if (isError(index)) {
+        return index;
+      }
+      return evalIndexExpression(left, index);
+
+    case ast.HashLiteral:
+      return evalHashLiteral(node, env);
 
     default:
       return null;

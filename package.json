@@ -36,7 +36,8 @@
   },
   "dependencies": {
     "babel-eslint": "^8.0.1",
-    "eslint": "^4.8.0"
+    "eslint": "^4.8.0",
+    "fnv1a": "^1.0.1"
   },
   "ava": {
     "files": [

@@ -47,6 +47,11 @@ export const IF: string = 'IF';
 export const ELSE: string = 'ELSE';
 export const RETURN: string = 'RETURN';
 
+export const LBRACKET: string = '[';
+export const RBRACKET: string = ']';
+
+export const COLON: string = ':';
+
 export function newToken(type: TokenType, char: ?string): Token {
   return {
     Type: type,

@@ -5,7 +5,7 @@ import Parser from '../src/parser';
 import * as ast from '../src/ast';
 import * as object from '../src/object';
 import Environment from '../src/environment';
-import Eval, { NULL } from '../src/evaluator';
+import Eval, { NULL, TRUE, FALSE } from '../src/evaluator';
 
 const testEval = (input: string): ?object.Obj => {
   const l: Lexer = new Lexer(input);
@@ -199,6 +199,10 @@ test('error handling', (t) => {
       input: '"Hello" - "World"',
       expected: 'unknown operator: STRING - STRING',
     },
+    {
+      input: '{"name": "Monkey"}[fn(x) { x }];',
+      expected: 'unusable as hash key: FUNCTION',
+    },
   ];
 
   tests.forEach((tt, idx) => {
@@ -324,6 +328,109 @@ test('builtin functions', (t) => {
         break;
       default:
         break;
+    }
+  });
+});
+
+test('array literals', (t) => {
+  const input: string = '[1, 2 * 2, 3 + 3]';
+
+  const evaluated: object.Obj = testEval(input);
+  const array: object.Array = ((evaluated: any): object.Array);
+
+  t.is(array.constructor, object.Array);
+  t.is(array.Elements.length, 3);
+
+  testIntegerObject(t, array.Elements[0], 1);
+  testIntegerObject(t, array.Elements[1], 4);
+  testIntegerObject(t, array.Elements[2], 6);
+});
+
+test('array index expressions', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: any,
+  }> = [
+    { input: '[1, 2, 3][0];', expected: 1 },
+    { input: '[1, 2, 3][1];', expected: 2 },
+    { input: '[1, 2, 3][2];', expected: 3 },
+    { input: 'let i = 0; [1][i];', expected: 1 },
+    { input: '[1, 2, 3][1 + 1];', expected: 3 },
+    { input: 'let arr = [1, 2, 3]; arr[2];', expected: 3 },
+    { input: 'let arr = [1, 2, 3]; arr[0] + arr[1] + arr[2];', expected: 6 },
+    { input: 'let arr = [1, 2, 3]; let i = arr[0]; arr[i]', expected: 2 },
+    { input: 'let arr = [1, 2, 3]; arr[3]', expected: null },
+    { input: 'let arr = [1, 2, 3]; arr[-1]', expected: null },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: object.Obj = testEval(tt.input);
+    const integer = ((tt.expected: any): number);
+
+    if (integer) {
+      testIntegerObject(t, evaluated, integer);
+    } else {
+      testNullObject(t, evaluated);
+    }
+  });
+});
+
+test('hash literals', (t) => {
+  const input: string = `
+  let two = "two";
+  {
+    "one": 10 - 9,
+    two: 1 + 1,
+    "thr" + "ee": 6 / 2,
+    4: 4,
+    true: 5,
+    false: 6
+  }`;
+
+  const evaluated: object.Obj = testEval(input);
+  const hash: object.Hash = ((evaluated: any): object.Hash);
+
+  t.is(hash.constructor, object.Hash);
+  const expected: { [object.HashKey]: number } = {
+    [new object.String('one').HashKey()]: 1,
+    [new object.String('two').HashKey()]: 2,
+    [new object.String('three').HashKey()]: 3,
+    [new object.Integer(4).HashKey()]: 4,
+    [TRUE.HashKey()]: 5,
+    [FALSE.HashKey()]: 6,
+  };
+
+  t.is(hash.Pairs.size, Object.keys(expected).length);
+
+  Object.keys(expected).forEach((k) => {
+    const pair = hash.Pairs.get(k);
+
+    testIntegerObject(t, pair.Value, expected[k]);
+  });
+});
+
+test('hash index expressions', (t) => {
+  const tests: Array<{
+    input: string,
+    expected: any,
+  }> = [
+    { input: '{ "foo": 5 }["foo"]', expected: 5 },
+    { input: '{ "foo": 5 }["bar"]', expected: null },
+    { input: 'let key = "foo"; { "foo": 5 }[key]', expected: 5 },
+    { input: '{}["foo"]', expected: null },
+    { input: '{ 5: 5 }[5]', expected: 5 },
+    { input: '{ true: 5 }[true]', expected: 5 },
+    { input: '{ false: 5 }[false]', expected: 5 },
+  ];
+
+  tests.forEach((tt) => {
+    const evaluated: object.Obj = testEval(tt.input);
+    const integer = ((tt.expected: any): number);
+
+    if (integer) {
+      testIntegerObject(t, evaluated, integer);
+    } else {
+      testNullObject(t, evaluated);
     }
   });
 });
