@@ -263,3 +263,29 @@ test('array', (t) => {
 
   t.pass();
 });
+
+test('hash', (t) => {
+  const input: string = '{"foo": "bar"}';
+  const tests: Array<{
+    expectedType: TokenType,
+    expectedLiteral: string,
+  }> = [
+    { expectedType: token.LBRACE, expectedLiteral: '{' },
+    { expectedType: token.STRING, expectedLiteral: 'foo' },
+    { expectedType: token.COLON, expectedLiteral: ':' },
+    { expectedType: token.STRING, expectedLiteral: 'bar' },
+    { expectedType: token.RBRACE, expectedLiteral: '}' },
+    { expectedType: token.EOF, expectedLiteral: '' },
+  ];
+
+  const l = new Lexer(input);
+
+  tests.forEach((tt, i) => {
+    const tok = l.nextToken();
+
+    t.is(tt.expectedType, tok.Type, `tests[${i}] - tokentype wrong.`);
+    t.is(tt.expectedLiteral, tok.Literal, `tests[${i}] - literal wrong.`);
+  });
+
+  t.pass();
+});

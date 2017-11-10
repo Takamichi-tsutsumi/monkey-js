@@ -334,3 +334,25 @@ export class IndexExpression {
     return `(${this.Left.toString(0)}[${this.Index.toString(0)}])`;
   }
 }
+
+export class HashLiteral {
+  Token: token.Token;
+  Pairs: Map<Expression, Expression>;
+
+  constructor(tok: token.Token) {
+    this.Token = tok;
+    this.Pairs = new Map();
+  }
+
+  expressionNode(): void {}
+
+  TokenLiteral(): string {
+    return this.Token.Literal;
+  }
+
+  toString(): string {
+    return `{${Object.keys(this.Pairs)
+      .map(key => `${key}:${this.Pairs[key]}`)
+      .join(', ')}}`;
+  }
+}

@@ -70,6 +70,9 @@ export default class Parser {
     // register perse array literal
     this.registerPrefix(token.LBRACKET, this.parseArrayLiteral.bind(this));
 
+    // register parse hash literal
+    this.registerPrefix(token.LBRACE, this.parseHashLiteral.bind(this));
+
     // register parse function for infix
     this.registerInfix(token.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(token.MINUS, this.parseInfixExpression.bind(this));
@@ -442,5 +445,32 @@ export default class Parser {
     }
 
     return new ast.IndexExpression(this.curToken, left, index);
+  }
+
+  parseHashLiteral(): ?ast.Expression {
+    const hash: ast.HashLiteral = new ast.HashLiteral(this.curToken);
+
+    while (!this.peekTokenIs(token.RBRACE)) {
+      this.nextToken();
+      const key: ast.Expression = this.parseExpression(LOWEST);
+      if (!this.expectPeek(token.COLON)) {
+        return null;
+      }
+
+      this.nextToken();
+      const value: ast.Expression = this.parseExpression(LOWEST);
+
+      hash.Pairs.set(key, value);
+
+      if (!this.peekTokenIs(token.RBRACE) && !this.expectPeek(token.COMMA)) {
+        return null;
+      }
+    }
+
+    if (!this.expectPeek(token.RBRACE)) {
+      return null;
+    }
+
+    return hash;
   }
 }
